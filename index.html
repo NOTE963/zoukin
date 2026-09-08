@@ -171,6 +171,7 @@
   <div id="matchScreen" class="screen">
     <div class="spinner"></div>
     <div class="match-text" id="matchText">対戦相手をさがしています…</div>
+    <button class="btn green" id="practiceBtn">🏃 待っている間に練習する</button>
     <button class="btn gray" id="cancelMatchBtn">キャンセル</button>
   </div>
 
@@ -185,6 +186,8 @@
     </div>
 
     <div id="countdownOverlay"></div>
+
+    <button class="btn gray" id="practiceBackBtn" style="position:absolute; top:max(70px, env(safe-area-inset-top)); left:14px; width:auto; padding:10px 16px; font-size:13px; display:none; z-index:6;">← マッチング画面へ</button>
 
     <div class="controls">
       <div id="wheelWrap"><div id="wheelInner"></div></div>
@@ -346,7 +349,49 @@ document.getElementById('friendBtn').onclick = () => {
 };
 document.getElementById('cancelMatchBtn').onclick = () => {
   cleanupQueue();
+  stopPractice();
   showScreen('start');
+};
+
+/* =====================================================================
+   練習モード（マッチング待ち中に1人で走れる）
+===================================================================== */
+let inPractice = false;
+let practiceAnimHandle = null;
+
+function startPractice(){
+  if (!uid) return;
+  inPractice = true;
+  showScreen('race');
+  resizeCanvas();
+  raceState = freshCarState(1);
+  raceState.startTime = Date.now();
+  document.getElementById('countdownOverlay').textContent = '';
+  document.getElementById('practiceBackBtn').style.display = 'block';
+  document.getElementById('opponentBox').innerHTML = '対戦相手<br>検索中…';
+  document.getElementById('timerText').textContent = '練習走行';
+
+  function loop(){
+    if (!inPractice) return;
+    updatePhysics();
+    render();
+    practiceAnimHandle = requestAnimationFrame(loop);
+  }
+  practiceAnimHandle = requestAnimationFrame(loop);
+}
+
+function stopPractice(){
+  inPractice = false;
+  if (practiceAnimHandle) cancelAnimationFrame(practiceAnimHandle);
+  practiceAnimHandle = null;
+  document.getElementById('practiceBackBtn').style.display = 'none';
+  raceState = null;
+}
+
+document.getElementById('practiceBtn').onclick = startPractice;
+document.getElementById('practiceBackBtn').onclick = () => {
+  stopPractice();
+  showScreen('match');
 };
 
 /* =====================================================================
@@ -481,10 +526,12 @@ function onOpponentUpdate(d){
 /* ---------- カウントダウン〜開始 ---------- */
 let countdownDone = false;
 function beginRaceSequence(roomRef, countdownStartTs){
+  stopPractice();
   showScreen('race');
   resizeCanvas();
   raceState = freshCarState(mySlot);
   countdownDone = false;
+  document.getElementById('opponentBox').innerHTML = opponentDisplay.name + "<br>LAP 1/3";
   const overlay = document.getElementById('countdownOverlay');
 
   // countdownStartはserverTimestamp。読み取り時に確定していない場合は現在時刻+3秒扱い
@@ -657,9 +704,13 @@ function updatePhysics(){
     c.lap += 1;
     c.hasPassedHalf = false;
     if (c.lap > 3){
-      c.finished = true;
-      c.finishTime = (Date.now() - c.startTime)/1000;
-      onFinish();
+      if (inPractice){
+        c.lap = 1; // 練習中は無限に周回できる
+      } else {
+        c.finished = true;
+        c.finishTime = (Date.now() - c.startTime)/1000;
+        onFinish();
+      }
     }
   }
   c.sPrev = s;
@@ -818,12 +869,15 @@ function drawCar(worldX, worldY, angle, camX, camY, colorA, colorB, drifting){
 function render(){
   if (!raceState) return;
   drawTrack(raceState.x, raceState.y);
-  drawCar(opponentDisplay.x, opponentDisplay.y, opponentDisplay.angle, raceState.x, raceState.y, "#7ec8ff", "#4a9fe0", false);
+  if (!inPractice){
+    drawCar(opponentDisplay.x, opponentDisplay.y, opponentDisplay.angle, raceState.x, raceState.y, "#7ec8ff", "#4a9fe0", false);
+  }
   drawCar(raceState.x, raceState.y, raceState.angle, raceState.x, raceState.y, "#ffd47e", "#f0a83a", raceState.isDrifting);
 
   document.getElementById('lapText').textContent = Math.min(raceState.lap,3) + "/3";
   if (raceState.startTime){
-    document.getElementById('timerText').textContent = fmtTime((Date.now()-raceState.startTime)/1000);
+    document.getElementById('timerText').textContent =
+      inPractice ? "練習走行" : fmtTime((Date.now()-raceState.startTime)/1000);
   }
   brakeBtn.classList.toggle('drift-glow', raceState.isDrifting);
 }
