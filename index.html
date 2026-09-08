@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>雑巾カート</title>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
+  html, body {
+    margin: 0; padding: 0; width: 100%; height: 100%;
+    overflow: hidden; background: #1b1f2a;
+    font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+    touch-action: none;
+  }
+  #app { position: fixed; inset: 0; width: 100%; height: 100%; }
+
+  .screen {
+    position: absolute; inset: 0;
+    display: none;
+    flex-direction: column;
+    align-items: center; justify-content: center;
+    color: #fff;
+    padding: 24px;
+  }
+  .screen.active { display: flex; }
+
+  /* ---------- スタート画面 ---------- */
+  #startScreen { background: linear-gradient(160deg,#2b3a67,#1b1f2a 70%); }
+  .title {
+    font-size: 40px; font-weight: 900; letter-spacing: 2px;
+    background: linear-gradient(90deg,#ffe08a,#ff8ac4,#8ad0ff);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    margin-bottom: 4px; text-align: center;
+  }
+  .subtitle { font-size: 13px; color: #b9c2e0; margin-bottom: 28px; text-align:center; }
+  .name-row { display:flex; align-items:center; gap:8px; margin-bottom: 22px; }
+  .name-row input {
+    padding: 10px 14px; border-radius: 10px; border: none; font-size: 15px;
+    width: 190px; background: #fff; color: #222;
+  }
+  .btn {
+    display: block; width: 260px; max-width: 82vw; padding: 16px 20px;
+    margin: 8px 0; border: none; border-radius: 16px;
+    font-size: 17px; font-weight: 800; color: #fff; cursor: pointer;
+    box-shadow: 0 6px 0 rgba(0,0,0,0.25);
+    transition: transform .05s;
+  }
+  .btn:active { transform: translateY(4px); box-shadow: 0 2px 0 rgba(0,0,0,0.25); }
+  .btn.random { background: linear-gradient(180deg,#ff8a5b,#ef5a3d); }
+  .btn.friend { background: linear-gradient(180deg,#6bd0ff,#2f9adf); }
+  .btn.gray { background: linear-gradient(180deg,#8891a8,#5c6480); }
+  .btn.green { background: linear-gradient(180deg,#7be08a,#2fae52); }
+
+  .friend-box {
+    margin-top: 6px; display:flex; flex-direction:column; align-items:center; gap:8px;
+  }
+  .friend-box input {
+    padding: 12px 14px; border-radius: 10px; border: none; font-size: 16px;
+    width: 220px; text-align:center; background:#fff; color:#222;
+  }
+  .hint { font-size: 11px; color: #8f9ac0; margin-top: 4px; text-align:center; max-width: 280px; }
+
+  /* ---------- マッチング画面 ---------- */
+  #matchScreen { background: #1b1f2a; }
+  .spinner {
+    width: 56px; height: 56px; border-radius: 50%;
+    border: 6px solid #33395a; border-top-color: #ff8a5b;
+    animation: spin 0.9s linear infinite; margin-bottom: 20px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .match-text { font-size: 16px; color: #dfe4ff; margin-bottom: 26px; }
+
+  /* ---------- レース画面 ---------- */
+  #raceScreen { padding: 0; }
+  #gameCanvas { position:absolute; inset:0; width:100%; height:100%; display:block; background:#c9b98a; }
+
+  .hud {
+    position: absolute; top: 0; left: 0; right: 0;
+    display:flex; justify-content: space-between; align-items:flex-start;
+    padding: max(10px, env(safe-area-inset-top)) 14px 0 14px;
+    pointer-events: none; font-weight: 800;
+  }
+  .hud .box {
+    background: rgba(10,12,20,0.55); border-radius: 12px; padding: 8px 12px;
+    font-size: 14px; color:#fff; line-height:1.3;
+  }
+  .hud .lap-num { font-size: 20px; color:#ffe08a; }
+
+  #countdownOverlay {
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    font-size: 90px; font-weight: 900; color:#fff; text-shadow: 0 0 20px rgba(0,0,0,0.6);
+    pointer-events:none; z-index: 5;
+  }
+
+  .controls {
+    position:absolute; left:0; right:0; bottom:0;
+    display:flex; justify-content:space-between; align-items:flex-end;
+    padding: 0 16px max(14px, env(safe-area-inset-bottom)) 16px;
+    pointer-events:none;
+  }
+  .controls > * { pointer-events:auto; }
+
+  #wheelWrap {
+    width: 120px; height: 120px; border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #4a5170, #262c42);
+    border: 5px solid #171b2b;
+    position: relative; touch-action:none;
+    box-shadow: 0 6px 14px rgba(0,0,0,0.4);
+  }
+  #wheelInner {
+    position:absolute; inset:10px; border-radius:50%;
+    border: 6px solid #cfd6f0;
+    display:flex; align-items:center; justify-content:center;
+  }
+  #wheelInner:after {
+    content:""; width:6px; height:38px; background:#ff8a5b; border-radius:3px;
+    position:absolute; top:8px;
+  }
+
+  .pedals { display:flex; flex-direction:column; gap:12px; align-items:flex-end; }
+  .pedal {
+    width: 96px; height: 74px; border-radius: 18px;
+    display:flex; align-items:center; justify-content:center;
+    font-size: 16px; font-weight: 900; color:#fff;
+    box-shadow: 0 6px 0 rgba(0,0,0,0.3);
+    touch-action:none;
+  }
+  .pedal.accel { background: linear-gradient(180deg,#7be08a,#2fae52); }
+  .pedal.accel.on { background: linear-gradient(180deg,#a8ffb4,#3fce63); transform: translateY(4px); box-shadow:0 2px 0 rgba(0,0,0,0.3); }
+  .pedal.brake { background: linear-gradient(180deg,#ff8a8a,#e0413f); }
+  .pedal.brake.on { background: linear-gradient(180deg,#ffb3b3,#ff5a57); transform: translateY(4px); box-shadow:0 2px 0 rgba(0,0,0,0.3); }
+  .pedal.drift-glow { box-shadow: 0 0 0 4px #ffe08a, 0 6px 0 rgba(0,0,0,0.3); }
+
+  /* ---------- 結果画面 ---------- */
+  #resultScreen { background: linear-gradient(160deg,#2b3a67,#1b1f2a 70%); }
+  .result-title { font-size: 30px; font-weight:900; margin-bottom: 6px; }
+  .result-title.win { color:#ffe08a; }
+  .result-title.lose { color:#9db0e0; }
+  .result-row {
+    width: 280px; max-width: 84vw; display:flex; justify-content:space-between;
+    background: rgba(255,255,255,0.08); border-radius: 12px; padding: 12px 16px; margin: 6px 0;
+    font-size: 15px;
+  }
+  .result-row.me { border: 2px solid #ffe08a; }
+
+  #statusLine { position:fixed; bottom:6px; left:0; right:0; text-align:center; font-size:10px; color:#5a6280; }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ================= スタート画面 ================= -->
+  <div id="startScreen" class="screen active">
+    <div class="title">🧼 雑巾カート 🧽</div>
+    <div class="subtitle">床をすべる雑巾で3周勝負！</div>
+
+    <div class="name-row">
+      <input id="nameInput" type="text" maxlength="8" placeholder="なまえ">
+    </div>
+
+    <button class="btn random" id="randomBtn">🎲 ランダムマッチ</button>
+
+    <div class="friend-box">
+      <input id="keywordInput" type="text" maxlength="12" placeholder="あいことば">
+      <button class="btn friend" id="friendBtn">🔑 フレンドマッチ</button>
+      <div class="hint">同じ「あいことば」を入力した人同士でマッチングします</div>
+    </div>
+  </div>
+
+  <!-- ================= マッチング画面 ================= -->
+  <div id="matchScreen" class="screen">
+    <div class="spinner"></div>
+    <div class="match-text" id="matchText">対戦相手をさがしています…</div>
+    <button class="btn gray" id="cancelMatchBtn">キャンセル</button>
+  </div>
+
+  <!-- ================= レース画面 ================= -->
+  <div id="raceScreen" class="screen">
+    <canvas id="gameCanvas"></canvas>
+
+    <div class="hud">
+      <div class="box">LAP<br><span class="lap-num" id="lapText">1/3</span></div>
+      <div class="box" id="opponentBox">相手<br>LAP 1/3</div>
+      <div class="box" id="timerText">00:00.0</div>
+    </div>
+
+    <div id="countdownOverlay"></div>
+
+    <div class="controls">
+      <div id="wheelWrap"><div id="wheelInner"></div></div>
+      <div class="pedals">
+        <div class="pedal accel" id="accelBtn">アクセル</div>
+        <div class="pedal brake" id="brakeBtn">ブレーキ</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= 結果画面 ================= -->
+  <div id="resultScreen" class="screen">
+    <div class="result-title" id="resultTitle">RESULT</div>
+    <div class="result-row me" id="rowMe"></div>
+    <div class="result-row" id="rowOpp"></div>
+    <button class="btn green" id="backBtn" style="margin-top:24px;">タイトルへもどる</button>
+  </div>
+
+</div>
+<div id="statusLine"></div>
+
+<!-- Firebase (compat SDK) -->
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
+
+<script>
+/* =====================================================================
+   Firebase 初期化
+===================================================================== */
+const firebaseConfig = {
+  apiKey: "AIzaSyDWxhILNkj0RrOV248Bh2zoFZfNq2G-3N0",
+  authDomain: "zoukin-kart.firebaseapp.com",
+  projectId: "zoukin-kart",
+  storageBucket: "zoukin-kart.firebasestorage.app",
+  messagingSenderId: "627298939041",
+  appId: "1:627298939041:web:3dafaed8c6d267f1d780e0",
+  measurementId: "G-DDW4R9EXW5"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+let uid = null;
+let myName = "プレイヤー";
+
+const statusLine = document.getElementById('statusLine');
+function setStatus(t){ statusLine.textContent = t; }
+
+auth.onAuthStateChanged(user => {
+  if (user) {
+    uid = user.uid;
+    setStatus("接続OK: " + uid.slice(0,6));
+  }
+});
+auth.signInAnonymously().catch(err => {
+  setStatus("ログイン失敗: " + err.message + "（Firebaseコンソールで匿名認証を有効にしてください）");
+});
+
+/* =====================================================================
+   画面切り替え
+===================================================================== */
+const screens = {
+  start: document.getElementById('startScreen'),
+  match: document.getElementById('matchScreen'),
+  race: document.getElementById('raceScreen'),
+  result: document.getElementById('resultScreen'),
+};
+function showScreen(name){
+  Object.values(screens).forEach(s => s.classList.remove('active'));
+  screens[name].classList.add('active');
+}
+
+/* =====================================================================
+   マッチメイキング（サーバーレス / Firestoreのみで実現）
+   - queue_random / queue_friend コレクションに自分のドキュメントを作成
+   - ドキュメントIDの昇順で先頭2件をペアとみなす
+   - 先頭(=initiator)がroomを作成し、2番目のドキュメントに matchedRoom を書き込む
+   - 2番目は自分のドキュメントの matchedRoom を監視して部屋に合流する
+===================================================================== */
+let queueUnsub = null;
+let myQueueRef = null;
+let currentRoomId = null;
+let roomUnsub = null;
+
+function cleanupQueue(){
+  if (queueUnsub){ queueUnsub(); queueUnsub = null; }
+  if (myQueueRef){ myQueueRef.delete().catch(()=>{}); myQueueRef = null; }
+}
+
+async function startMatching(mode, keyword){
+  if (!uid){ alert("接続中です。少し待ってからもう一度お試しください"); return; }
+  myName = (document.getElementById('nameInput').value || "プレイヤー").trim().slice(0,8) || "プレイヤー";
+  showScreen('match');
+  document.getElementById('matchText').textContent =
+    mode === 'friend' ? `「${keyword}」で対戦相手をさがしています…` : "対戦相手をさがしています…";
+
+  const colName = mode === 'friend' ? 'queue_friend' : 'queue_random';
+  const col = db.collection(colName);
+
+  const docData = {
+    uid, name: myName,
+    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+    matchedRoom: null
+  };
+  if (mode === 'friend') docData.keyword = keyword;
+
+  myQueueRef = await col.add(docData);
+
+  // 自分のドキュメントを監視 → matchedRoom が付いたら合流（2番手の場合）
+  const myDocUnsub = myQueueRef.onSnapshot(snap => {
+    const d = snap.data();
+    if (d && d.matchedRoom){
+      myDocUnsub();
+      if (queueUnsub) queueUnsub();
+      myQueueRef.delete().catch(()=>{});
+      myQueueRef = null;
+      joinRoom(d.matchedRoom, mode === 'friend' ? 2 : 2, true);
+    }
+  });
+
+  // 待機列全体を監視 → 自分が先頭(initiator)なら部屋を作る（1番手の場合）
+  let q = col.orderBy(firebase.firestore.FieldPath.documentId());
+  if (mode === 'friend') q = col.where('keyword', '==', keyword)
+                                 .orderBy(firebase.firestore.FieldPath.documentId());
+
+  queueUnsub = q.onSnapshot(async snap => {
+    const docs = snap.docs.filter(d => !d.data().matchedRoom);
+    if (docs.length < 2 || !myQueueRef) return;
+    const first = docs[0], second = docs[1];
+    if (first.id !== myQueueRef.id) return; // 自分が先頭でなければ待つ
+
+    // 自分(先頭)がルーム作成
+    if (queueUnsub) { queueUnsub(); queueUnsub = null; }
+    try {
+      const roomRef = await db.collection('rooms').add({
+        status: 'waiting',
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        players: {
+          [uid]: { name: myName, x: 0, y: 0, angle: 0, lap: 1, finished: false, finishTime: null }
+        }
+      });
+      await second.ref.update({ matchedRoom: roomRef.id });
+      const myRef = myQueueRef;
+      myQueueRef = null;
+      await myRef.delete().catch(()=>{});
+      joinRoom(roomRef.id, 1, true);
+    } catch(e){
+      setStatus("マッチング失敗: " + e.message);
+    }
+  }, err => setStatus("マッチング監視エラー: " + err.message));
+}
+
+document.getElementById('randomBtn').onclick = () => startMatching('random');
+document.getElementById('friendBtn').onclick = () => {
+  const kw = (document.getElementById('keywordInput').value || '').trim();
+  if (!kw){ alert("あいことばを入力してください"); return; }
+  startMatching('friend', kw);
+};
+document.getElementById('cancelMatchBtn').onclick = () => {
+  cleanupQueue();
+  showScreen('start');
+};
+
+/* =====================================================================
+   ルーム合流〜レース進行
+===================================================================== */
+let opponentUid = null;
+let mySlot = 1; // 1 or 2（スタート位置決め用）
+let raceState = null; // このクライアントのローカル物理状態
+
+function joinRoom(roomId, slot, amIInitiator){
+  currentRoomId = roomId;
+  mySlot = slot;
+  const roomRef = db.collection('rooms').doc(roomId);
+
+  if (!amIInitiator || slot === 2){
+    // 2番手は自分のplayersエントリを追加する
+    roomRef.update({
+      ['players.' + uid]: { name: myName, x:0, y:0, angle:0, lap:1, finished:false, finishTime:null },
+      status: 'countdown',
+      countdownStart: firebase.firestore.FieldValue.serverTimestamp()
+    }).catch(()=>{});
+  }
+
+  roomUnsub = roomRef.onSnapshot(snap => {
+    const d = snap.data();
+    if (!d) return;
+    const uids = Object.keys(d.players || {});
+    if (uids.length === 2 && !opponentUid){
+      opponentUid = uids.find(u => u !== uid);
+    }
+    if (d.status === 'countdown' && d.countdownStart && !raceState){
+      beginRaceSequence(roomRef, d.countdownStart);
+    }
+    if (opponentUid && d.players && d.players[opponentUid]){
+      onOpponentUpdate(d.players[opponentUid]);
+    }
+    if (d.status === 'finished'){
+      // 何もしない（自分のfinish判定はローカルで行う）
+    }
+  }, err => setStatus("ルーム監視エラー: " + err.message));
+}
+
+/* ---------- トラック定義（スタジアム型） ---------- */
+const TRACK = {
+  L: 900,      // 直線部の長さ
+  R: 260,      // カーブ半径
+  width: 240,  // 走行帯の幅
+};
+TRACK.total = TRACK.L * 2 + Math.PI * TRACK.R * 2;
+
+function centerlinePoint(s){
+  s = ((s % TRACK.total) + TRACK.total) % TRACK.total;
+  const L = TRACK.L, R = TRACK.R;
+  if (s < L){
+    return { x: -L/2 + s, y: -R };
+  } else if (s < L + Math.PI*R){
+    const a = -Math.PI/2 + (s - L) / R;
+    return { x: L/2 + R*Math.cos(a), y: R*Math.sin(a) };
+  } else if (s < 2*L + Math.PI*R){
+    const s2 = s - (L + Math.PI*R);
+    return { x: L/2 - s2, y: R };
+  } else {
+    const s2 = s - (2*L + Math.PI*R);
+    const a = Math.PI/2 + s2 / R;
+    return { x: -L/2 + R*Math.cos(a), y: R*Math.sin(a) };
+  }
+}
+
+// s(進行度)推定：サンプリングで最近傍点を探す
+const S_SAMPLES = 240;
+const sampleCache = [];
+for (let i=0;i<S_SAMPLES;i++){
+  const s = TRACK.total * i / S_SAMPLES;
+  const p = centerlinePoint(s);
+  sampleCache.push({s, x:p.x, y:p.y});
+}
+function estimateS(x, y){
+  let bestI = 0, bestD = Infinity;
+  for (let i=0;i<S_SAMPLES;i++){
+    const dx = sampleCache[i].x - x, dy = sampleCache[i].y - y;
+    const d = dx*dx+dy*dy;
+    if (d < bestD){ bestD = d; bestI = i; }
+  }
+  // 前後を細かく再探索
+  const step = TRACK.total / S_SAMPLES;
+  let bestS = sampleCache[bestI].s, bestD2 = bestD;
+  for (let k=-5;k<=5;k++){
+    const s = sampleCache[bestI].s + step*k/10;
+    const p = centerlinePoint(s);
+    const dx = p.x-x, dy = p.y-y;
+    const d = dx*dx+dy*dy;
+    if (d < bestD2){ bestD2 = d; bestS = s; }
+  }
+  return { s: bestS, dist: Math.sqrt(bestD2) };
+}
+
+/* ---------- レースローカル状態 ---------- */
+function freshCarState(spawnSide){
+  const p0 = centerlinePoint(0);
+  const offset = spawnSide === 1 ? -55 : 55; // 横並びスタート
+  return {
+    x: p0.x, y: p0.y + offset,
+    angle: 0,          // 見た目の向き
+    moveAngle: 0,       // 実際の移動方向
+    speed: 0,
+    steering: 0,        // -1..1
+    accelOn: false,
+    brakeOn: false,
+    isDrifting: false,
+    driftTimer: 0,
+    driftDir: 0,
+    boostTimer: 0,
+    lap: 1,
+    hasPassedHalf: false,
+    sPrev: 0,
+    finished: false,
+    finishTime: null,
+    startTime: null,
+  };
+}
+
+let opponentDisplay = { x:0, y:0, angle:0, lap:1, finished:false, name:"対戦相手", finishTime:null };
+function onOpponentUpdate(d){
+  opponentDisplay.x = d.x; opponentDisplay.y = d.y; opponentDisplay.angle = d.angle;
+  opponentDisplay.lap = d.lap; opponentDisplay.finished = d.finished;
+  opponentDisplay.name = d.name || "対戦相手";
+  opponentDisplay.finishTime = d.finishTime;
+  document.getElementById('opponentBox').innerHTML =
+    (d.name || "対戦相手") + "<br>LAP " + Math.min(d.lap,3) + "/3" + (d.finished ? " 🏁" : "");
+}
+
+/* ---------- カウントダウン〜開始 ---------- */
+let countdownDone = false;
+function beginRaceSequence(roomRef, countdownStartTs){
+  showScreen('race');
+  resizeCanvas();
+  raceState = freshCarState(mySlot);
+  countdownDone = false;
+  const overlay = document.getElementById('countdownOverlay');
+
+  // countdownStartはserverTimestamp。読み取り時に確定していない場合は現在時刻+3秒扱い
+  const startMs = countdownStartTs.toMillis ? countdownStartTs.toMillis() : Date.now();
+  const raceStartMs = startMs + 3000;
+
+  function tick(){
+    const now = Date.now();
+    const remain = raceStartMs - now;
+    if (remain > 0){
+      const n = Math.ceil(remain/1000);
+      overlay.textContent = n > 3 ? "" : String(n);
+      requestAnimationFrame(tick);
+    } else {
+      overlay.textContent = "GO!";
+      countdownDone = true;
+      raceState.startTime = Date.now();
+      setTimeout(()=>{ overlay.textContent=""; }, 700);
+      startGameLoop();
+    }
+  }
+  tick();
+}
+
+/* =====================================================================
+   入力（ハンドル / アクセル / ブレーキ）
+===================================================================== */
+const wheelWrap = document.getElementById('wheelWrap');
+const wheelInner = document.getElementById('wheelInner');
+let wheelDragging = false;
+let wheelAngleDeg = 0; // -90..90
+
+function wheelPointerMove(clientX, clientY){
+  const rect = wheelWrap.getBoundingClientRect();
+  const cx = rect.left + rect.width/2, cy = rect.top + rect.height/2;
+  let deg = Math.atan2(clientX - cx, -(clientY - cy)) * 180 / Math.PI;
+  deg = Math.max(-90, Math.min(90, deg));
+  wheelAngleDeg = deg;
+  wheelInner.style.transform = 'rotate(' + deg + 'deg)';
+  if (raceState) raceState.steering = deg / 90;
+}
+function wheelReset(){
+  wheelDragging = false;
+  wheelAngleDeg = 0;
+  wheelInner.style.transform = 'rotate(0deg)';
+  if (raceState) raceState.steering = 0;
+}
+wheelWrap.addEventListener('pointerdown', e => { wheelDragging = true; wheelWrap.setPointerCapture(e.pointerId); wheelPointerMove(e.clientX, e.clientY); });
+wheelWrap.addEventListener('pointermove', e => { if (wheelDragging) wheelPointerMove(e.clientX, e.clientY); });
+wheelWrap.addEventListener('pointerup', wheelReset);
+wheelWrap.addEventListener('pointercancel', wheelReset);
+
+const accelBtn = document.getElementById('accelBtn');
+const brakeBtn = document.getElementById('brakeBtn');
+function bindPedal(el, onFn, offFn){
+  el.addEventListener('pointerdown', e => { el.setPointerCapture(e.pointerId); onFn(); });
+  el.addEventListener('pointerup', offFn);
+  el.addEventListener('pointercancel', offFn);
+  el.addEventListener('pointerleave', () => { /* keep held while pointer captured */ });
+}
+bindPedal(accelBtn,
+  () => { accelBtn.classList.add('on'); if (raceState) raceState.accelOn = true; },
+  () => { accelBtn.classList.remove('on'); if (raceState) raceState.accelOn = false; }
+);
+bindPedal(brakeBtn,
+  () => { brakeBtn.classList.add('on'); if (raceState) raceState.brakeOn = true; },
+  () => { brakeBtn.classList.remove('on'); if (raceState) raceState.brakeOn = false; releaseDrift(); }
+);
+
+function releaseDrift(){
+  if (!raceState || !raceState.isDrifting) return;
+  const t = raceState.driftTimer;
+  raceState.isDrifting = false;
+  if (t > 50){
+    const boost = t > 78 ? MAX_SPEED*0.95 : MAX_SPEED*0.5;
+    raceState.speed = Math.min(raceState.speed + boost, MAX_SPEED*1.6);
+    raceState.boostTimer = t > 78 ? 55 : 35;
+  }
+  raceState.driftTimer = 0;
+}
+
+/* =====================================================================
+   物理・ゲームループ
+===================================================================== */
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+function resizeCanvas(){
+  canvas.width = window.innerWidth * devicePixelRatio;
+  canvas.height = window.innerHeight * devicePixelRatio;
+  canvas.style.width = window.innerWidth + 'px';
+  canvas.style.height = window.innerHeight + 'px';
+}
+window.addEventListener('resize', resizeCanvas);
+
+const MAX_SPEED = 6.2;
+const ACCEL = 0.16;
+const BRAKE_DECEL = 0.26;
+const FRICTION = 0.985;
+const BASE_TURN = 0.052;
+const DRIFT_TURN_MULT = 1.55;
+const OFFTRACK_MULT = 0.5;
+
+let lastSyncTime = 0;
+let animHandle = null;
+
+function updatePhysics(){
+  const c = raceState;
+  if (!c || c.finished) return;
+
+  // オントラック判定
+  const { s, dist } = estimateS(c.x, c.y);
+  const onTrack = dist < TRACK.width/2;
+  const maxSpeedNow = (onTrack ? MAX_SPEED : MAX_SPEED*OFFTRACK_MULT) * (c.boostTimer>0 ? 1.5 : 1);
+
+  // 加減速
+  if (c.accelOn){
+    c.speed += ACCEL;
+  } else if (c.brakeOn){
+    if (c.speed > 0.4) c.speed -= BRAKE_DECEL;
+    else c.speed = Math.max(c.speed - 0.05, -2.2);
+  } else {
+    c.speed *= FRICTION;
+    if (Math.abs(c.speed) < 0.02) c.speed = 0;
+  }
+  c.speed = Math.max(-2.2, Math.min(c.speed, maxSpeedNow));
+  if (!onTrack) c.speed *= 0.965;
+
+  // ドリフト判定
+  const wantDrift = c.brakeOn && Math.abs(c.steering) > 0.28 && c.speed > 1.6;
+  if (wantDrift && !c.isDrifting){
+    c.isDrifting = true;
+    c.driftDir = c.steering > 0 ? 1 : -1;
+    c.driftTimer = 0;
+  }
+  if (c.isDrifting && !c.brakeOn){
+    releaseDrift();
+  }
+  if (c.isDrifting){
+    c.driftTimer = Math.min(c.driftTimer + 1, 100);
+  }
+
+  // 旋回
+  const speedFactor = 0.35 + 0.65*Math.min(1, Math.abs(c.speed)/2.5);
+  const turnMult = c.isDrifting ? DRIFT_TURN_MULT : 1;
+  const dir = c.speed >= 0 ? 1 : -1;
+  c.angle += BASE_TURN * c.steering * speedFactor * turnMult * dir;
+
+  if (c.isDrifting){
+    // 見た目角度が先行し、移動方向はゆっくり追従（スライド演出）
+    let diff = c.angle - c.moveAngle;
+    diff = Math.atan2(Math.sin(diff), Math.cos(diff));
+    c.moveAngle += diff * 0.07;
+  } else {
+    c.moveAngle = c.angle;
+  }
+
+  c.x += Math.cos(c.moveAngle) * c.speed;
+  c.y += Math.sin(c.moveAngle) * c.speed;
+
+  if (c.boostTimer > 0) c.boostTimer--;
+
+  // 周回判定
+  if (c.hasPassedHalf === false){
+    const half = TRACK.total/2;
+    if (s > half*0.4 && s < half*1.6 && Math.abs(s-half) < TRACK.total*0.15){
+      c.hasPassedHalf = true;
+    }
+  }
+  if (c.sPrev > TRACK.total*0.85 && s < TRACK.total*0.15 && c.hasPassedHalf){
+    c.lap += 1;
+    c.hasPassedHalf = false;
+    if (c.lap > 3){
+      c.finished = true;
+      c.finishTime = (Date.now() - c.startTime)/1000;
+      onFinish();
+    }
+  }
+  c.sPrev = s;
+}
+
+function onFinish(){
+  if (!currentRoomId) return;
+  db.collection('rooms').doc(currentRoomId).update({
+    ['players.' + uid + '.finished']: true,
+    ['players.' + uid + '.finishTime']: raceState.finishTime,
+    ['players.' + uid + '.lap']: 4
+  }).catch(()=>{});
+  checkRaceEnd();
+}
+
+function checkRaceEnd(){
+  if (!raceState || !raceState.finished) return;
+  // 相手がすでにゴールしていれば即結果、まだなら少し待つ
+  if (opponentDisplay.finished){
+    showResult();
+  } else {
+    document.getElementById('countdownOverlay').textContent = '';
+    const waitCheck = setInterval(() => {
+      if (opponentDisplay.finished){
+        clearInterval(waitCheck);
+        showResult();
+      }
+    }, 400);
+    // 60秒待っても来なければ強制終了
+    setTimeout(() => { clearInterval(waitCheck); if(screens.race.classList.contains('active')) showResult(); }, 60000);
+  }
+}
+
+function showResult(){
+  if (roomUnsub){ roomUnsub(); roomUnsub = null; }
+  showScreen('result');
+  const myTime = raceState.finishTime;
+  const oppTime = opponentDisplay.finishTime;
+  const rowMe = document.getElementById('rowMe');
+  const rowOpp = document.getElementById('rowOpp');
+  rowMe.textContent = myName + "（あなた）: " + fmtTime(myTime);
+  rowOpp.textContent = opponentDisplay.name + ": " + (oppTime != null ? fmtTime(oppTime) : "リタイア");
+
+  const title = document.getElementById('resultTitle');
+  if (oppTime == null || myTime < oppTime){
+    title.textContent = "🏆 YOU WIN!";
+    title.className = "result-title win";
+  } else {
+    title.textContent = "YOU LOSE...";
+    title.className = "result-title lose";
+  }
+}
+
+function fmtTime(t){
+  if (t == null) return "--:--.-";
+  const m = Math.floor(t/60);
+  const s = (t%60).toFixed(1).padStart(4,'0');
+  return String(m).padStart(2,'0') + ":" + s;
+}
+
+/* ---------- 描画 ---------- */
+function drawTrack(camX, camY){
+  const w = canvas.width, h = canvas.height;
+  // 床(オフトラック)
+  ctx.fillStyle = "#cdbd8e";
+  ctx.fillRect(0,0,w,h);
+  ctx.save();
+  ctx.translate(w/2 - camX*devicePixelRatio, h/2 - camY*devicePixelRatio);
+  ctx.scale(devicePixelRatio, devicePixelRatio);
+
+  // 走行帯（センターラインに沿って太い線でなぞる）
+  ctx.lineWidth = TRACK.width;
+  ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+  ctx.strokeStyle = "#eef1f8";
+  ctx.beginPath();
+  for (let i=0;i<=S_SAMPLES;i++){
+    const p = sampleCache[i % S_SAMPLES];
+    if (i===0) ctx.moveTo(p.x,p.y); else ctx.lineTo(p.x,p.y);
+  }
+  ctx.closePath();
+  ctx.stroke();
+
+  // 走行帯の縁取り（水色ライン、雑巾で拭いた跡っぽい光沢）
+  ctx.lineWidth = TRACK.width - 14;
+  ctx.strokeStyle = "#dfe8fb";
+  ctx.stroke();
+
+  // センターの破線
+  ctx.lineWidth = 4;
+  ctx.setLineDash([18,16]);
+  ctx.strokeStyle = "#b9c4de";
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // スタート/フィニッシュライン（s=0地点、直線区間の始点付近に縦線）
+  const p0 = centerlinePoint(0);
+  ctx.save();
+  ctx.translate(p0.x, p0.y);
+  const tile = 16;
+  for (let i=-TRACK.width/2; i<TRACK.width/2; i+=tile){
+    ctx.fillStyle = (Math.floor(i/tile)%2===0) ? "#222" : "#fff";
+    ctx.fillRect(-6, i, 12, tile);
+  }
+  ctx.restore();
+
+  ctx.restore();
+}
+
+function drawCar(worldX, worldY, angle, camX, camY, colorA, colorB, drifting){
+  const w = canvas.width, h = canvas.height;
+  ctx.save();
+  ctx.translate(w/2 - camX*devicePixelRatio, h/2 - camY*devicePixelRatio);
+  ctx.scale(devicePixelRatio, devicePixelRatio);
+  ctx.translate(worldX, worldY);
+  ctx.rotate(angle);
+
+  // 雑巾ボディ（チェック柄の布）
+  const cw = 34, ch = 20;
+  ctx.fillStyle = colorA;
+  ctx.beginPath();
+  ctx.roundRect ? ctx.roundRect(-cw/2, -ch/2, cw, ch, 6) : ctx.rect(-cw/2,-ch/2,cw,ch);
+  ctx.fill();
+  ctx.fillStyle = colorB;
+  for (let i=0;i<4;i++){
+    for (let j=0;j<2;j++){
+      if ((i+j)%2===0) ctx.fillRect(-cw/2 + i*(cw/4), -ch/2 + j*(ch/2), cw/4, ch/2);
+    }
+  }
+  // ふちのギザギザ（雑巾感）
+  ctx.strokeStyle = "rgba(0,0,0,0.25)";
+  ctx.lineWidth = 1.5;
+  ctx.strokeRect(-cw/2,-ch/2,cw,ch);
+
+  // 進行方向の小さい矢印
+  ctx.fillStyle = "rgba(0,0,0,0.4)";
+  ctx.beginPath();
+  ctx.moveTo(cw/2, 0); ctx.lineTo(cw/2-8,-6); ctx.lineTo(cw/2-8,6);
+  ctx.closePath(); ctx.fill();
+
+  ctx.restore();
+
+  // ドリフト中の煙エフェクト（簡易）
+  if (drifting){
+    ctx.save();
+    ctx.translate(w/2 - camX*devicePixelRatio, h/2 - camY*devicePixelRatio);
+    ctx.scale(devicePixelRatio, devicePixelRatio);
+    ctx.globalAlpha = 0.35;
+    ctx.fillStyle = "#fff";
+    ctx.beginPath();
+    ctx.arc(worldX - Math.cos(angle)*20, worldY - Math.sin(angle)*20, 8, 0, Math.PI*2);
+    ctx.fill();
+    ctx.restore();
+  }
+}
+
+function render(){
+  if (!raceState) return;
+  drawTrack(raceState.x, raceState.y);
+  drawCar(opponentDisplay.x, opponentDisplay.y, opponentDisplay.angle, raceState.x, raceState.y, "#7ec8ff", "#4a9fe0", false);
+  drawCar(raceState.x, raceState.y, raceState.angle, raceState.x, raceState.y, "#ffd47e", "#f0a83a", raceState.isDrifting);
+
+  document.getElementById('lapText').textContent = Math.min(raceState.lap,3) + "/3";
+  if (raceState.startTime){
+    document.getElementById('timerText').textContent = fmtTime((Date.now()-raceState.startTime)/1000);
+  }
+  brakeBtn.classList.toggle('drift-glow', raceState.isDrifting);
+}
+
+function startGameLoop(){
+  function loop(){
+    updatePhysics();
+    render();
+    syncToFirestore();
+    if (!raceState.finished) animHandle = requestAnimationFrame(loop);
+  }
+  animHandle = requestAnimationFrame(loop);
+}
+
+function syncToFirestore(){
+  if (!currentRoomId || !raceState) return;
+  const now = Date.now();
+  if (now - lastSyncTime < 90) return;
+  lastSyncTime = now;
+  db.collection('rooms').doc(currentRoomId).update({
+    ['players.' + uid]: {
+      name: myName, x: raceState.x, y: raceState.y, angle: raceState.angle,
+      lap: raceState.lap, finished: raceState.finished, finishTime: raceState.finishTime
+    }
+  }).catch(()=>{});
+}
+
+/* =====================================================================
+   結果画面 → タイトルへ
+===================================================================== */
+document.getElementById('backBtn').onclick = () => {
+  cleanupRace();
+  showScreen('start');
+};
+
+function cleanupRace(){
+  if (animHandle) cancelAnimationFrame(animHandle);
+  if (roomUnsub){ roomUnsub(); roomUnsub = null; }
+  if (currentRoomId){
+    db.collection('rooms').doc(currentRoomId).delete().catch(()=>{});
+  }
+  currentRoomId = null; opponentUid = null; raceState = null;
+  opponentDisplay = { x:0,y:0,angle:0,lap:1,finished:false,name:"対戦相手",finishTime:null };
+  countdownDone = false;
+}
+
+resizeCanvas();
+</script>
+</body>
+</html>
