@@ -10,7 +10,6 @@
   #app { position:fixed; inset:0; }
   canvas { display:block; touch-action:none; }
 
-  /* ---------- 縦画面警告 ---------- */
   #rotateWarn {
     position:fixed; inset:0; background:#0a0a12; color:#fff; z-index:9999;
     display:none; align-items:center; justify-content:center; flex-direction:column; text-align:center; gap:16px;
@@ -19,23 +18,23 @@
   #rotateWarn .icon { font-size:56px; animation:rot 1.4s ease-in-out infinite; }
   @keyframes rot { 0%,100%{transform:rotate(0deg)} 50%{transform:rotate(90deg)} }
 
-  /* ---------- ロビー ---------- */
   #lobby {
     position:fixed; inset:0; z-index:50;
     background:radial-gradient(circle at 50% 20%,#1c2333,#05070d 70%);
-    display:flex; align-items:center; justify-content:center; color:#fff;
+    display:flex; align-items:center; justify-content:center; color:#fff; overflow-y:auto;
   }
   #lobby.hidden{display:none;}
   .lobbyCard {
     width:min(560px,92vw); background:rgba(20,24,38,.85); border:1px solid #2e3a55;
-    border-radius:16px; padding:28px; backdrop-filter:blur(6px);
+    border-radius:16px; padding:24px; backdrop-filter:blur(6px); margin:16px 0;
   }
-  .lobbyCard h1 { font-size:26px; letter-spacing:2px; text-align:center; margin-bottom:6px; color:#7fd7ff; }
-  .lobbyCard .sub { text-align:center; color:#8a93ad; font-size:12px; margin-bottom:20px; }
+  .lobbyCard h1 { font-size:24px; letter-spacing:2px; text-align:center; margin-bottom:4px; color:#7fd7ff; }
+  .lobbyCard .sub { text-align:center; color:#8a93ad; font-size:12px; margin-bottom:16px; }
+  label.fld { display:block; font-size:11px; color:#9fb0d8; margin-bottom:4px; }
   .modeBtns { display:flex; gap:10px; margin-bottom:14px; }
   .modeBtn {
     flex:1; padding:14px 8px; border-radius:10px; border:1px solid #3a4766; background:#161c2c; color:#cfd8f0;
-    font-size:14px; font-weight:600; cursor:pointer; transition:.15s;
+    font-size:13px; font-weight:600; cursor:pointer; transition:.15s;
   }
   .modeBtn.active { background:#2f6bff; border-color:#2f6bff; color:#fff; }
   .panel { display:none; flex-direction:column; gap:10px; }
@@ -49,10 +48,10 @@
   }
   .bigBtn:disabled{opacity:.5;}
   .status { text-align:center; font-size:13px; color:#8a93ad; min-height:18px; }
-  .weaponInfo { display:flex; gap:8px; margin-top:6px; }
+  .weaponInfo { display:flex; gap:8px; margin-top:10px; }
   .weaponInfo div { flex:1; background:#0c1120; border:1px solid #26314c; border-radius:8px; padding:8px; font-size:11px; text-align:center; color:#9fb0d8;}
+  .nameRow { margin-bottom:16px; }
 
-  /* ---------- HUD ---------- */
   #hud { position:fixed; inset:0; z-index:20; pointer-events:none; display:none; }
   #hud.show { display:block; }
   #crosshair {
@@ -69,11 +68,11 @@
   #healthFill { height:100%; width:100%; background:linear-gradient(90deg,#ff5050,#ff9d50); transition:width .15s; }
   #healthTxt { color:#fff; font-size:11px; margin-top:4px; text-shadow:0 1px 2px #000; }
 
-  #weaponWrap { position:absolute; right:16px; bottom:16px; text-align:right; }
+  #weaponWrap { position:absolute; right:16px; bottom:150px; text-align:right; }
   #weaponName { color:#fff; font-size:16px; font-weight:800; text-shadow:0 1px 3px #000; }
-  #weaponSub { color:#9fb0d8; font-size:11px; }
+  #weaponSub { color:#ffd27f; font-size:12px; text-shadow:0 1px 2px #000;}
   #weaponSwatches { display:flex; gap:6px; margin-top:6px; justify-content:flex-end; pointer-events:auto; }
-  .wsw { width:40px; height:32px; border-radius:6px; background:rgba(20,24,38,.75); border:1px solid #3a4766; color:#cfd8f0; font-size:10px; display:flex; align-items:center; justify-content:center; cursor:pointer;}
+  .wsw { width:44px; height:36px; border-radius:6px; background:rgba(20,24,38,.85); border:1px solid #3a4766; color:#cfd8f0; font-size:11px; display:flex; align-items:center; justify-content:center; cursor:pointer;}
   .wsw.active{ border-color:#7fd7ff; color:#fff; background:#20365c;}
 
   #topInfo { position:absolute; top:14px; left:50%; transform:translateX(-50%); text-align:center; color:#fff; }
@@ -83,7 +82,10 @@
   #killfeed { position:absolute; top:14px; right:14px; display:flex; flex-direction:column; gap:4px; align-items:flex-end; }
   .killmsg { background:rgba(10,12,20,.7); color:#fff; font-size:11px; padding:4px 8px; border-radius:6px; }
 
-  /* 移動/照準/射撃 タッチUI */
+  #minimapWrap { position:absolute; top:14px; left:14px; width:120px; height:120px; border-radius:50%;
+    background:rgba(6,10,20,.55); border:2px solid rgba(127,215,255,.5); overflow:hidden; }
+  #minimapCanvas { width:100%; height:100%; display:block; }
+
   #touchControls { position:fixed; inset:0; z-index:25; display:none; }
   #touchControls.show{ display:block; }
   #moveStick, #lookZone { position:absolute; pointer-events:auto; }
@@ -92,16 +94,11 @@
   #moveBase { width:100%; height:100%; border-radius:50%; background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.25); }
   #moveKnob { position:absolute; width:50px; height:50px; border-radius:50%; background:rgba(255,255,255,.35); left:35px; top:35px; }
   #fireBtn {
-    position:absolute; right:26px; bottom:70px; width:78px; height:78px; border-radius:50%;
+    position:absolute; right:26px; bottom:30px; width:78px; height:78px; border-radius:50%;
     background:rgba(255,70,70,.35); border:2px solid rgba(255,120,120,.6); pointer-events:auto;
-  }
-  #jumpBtn {
-    position:absolute; right:118px; bottom:30px; width:56px; height:56px; border-radius:50%;
-    background:rgba(255,255,255,.18); border:2px solid rgba(255,255,255,.4); pointer-events:auto;
-    color:#fff; font-size:11px; display:flex; align-items:center; justify-content:center;
+    display:flex; align-items:center; justify-content:center; color:#fff; font-size:11px; font-weight:700;
   }
 
-  /* ---------- 死亡/結果画面 ---------- */
   #resultScreen {
     position:fixed; inset:0; z-index:60; background:rgba(4,6,12,.9); color:#fff;
     display:none; align-items:center; justify-content:center; flex-direction:column; gap:14px; text-align:center;
@@ -109,7 +106,6 @@
   #resultScreen.show{ display:flex; }
   #resultScreen h2 { font-size:34px; letter-spacing:2px; color:#ffd27f; }
   #resultScreen .rankNum { font-size:56px; font-weight:900; color:#7fd7ff; }
-  #resultScreen button { margin-top:10px; }
 
   #gamepadTag {
     position:fixed; bottom:8px; left:50%; transform:translateX(-50%); z-index:70; color:#7fffb0;
@@ -127,15 +123,20 @@
       <h1>LOW POLY FPS</h1>
       <div class="sub">超軽量ポリゴン シューティング</div>
 
+      <div class="nameRow">
+        <label class="fld">ユーザーネーム</label>
+        <input type="text" id="usernameInput" placeholder="名前を入力(最大10文字)" maxlength="10">
+      </div>
+
       <div class="modeBtns">
-        <button class="modeBtn active" id="modeDuelBtn">1対1 (合言葉)</button>
+        <button class="modeBtn active" id="modePwBtn">合言葉乱戦</button>
         <button class="modeBtn" id="modeBrBtn">バトロワ</button>
       </div>
 
-      <div class="panel show" id="duelPanel">
-        <input type="text" id="duelPass" placeholder="合言葉を入力 (相手と同じ言葉)" maxlength="24">
-        <button class="bigBtn" id="duelStartBtn">マッチング開始</button>
-        <div class="status" id="duelStatus"></div>
+      <div class="panel show" id="pwPanel">
+        <input type="text" id="pwPass" placeholder="合言葉を入力(同じ合言葉の人と乱戦)" maxlength="24">
+        <button class="bigBtn" id="pwStartBtn">マッチング開始</button>
+        <div class="status" id="pwStatus"></div>
       </div>
 
       <div class="panel" id="brPanel">
@@ -157,7 +158,7 @@
     <div id="healthWrap"><div id="healthBar"><div id="healthFill"></div></div><div id="healthTxt">HP 100</div></div>
     <div id="weaponWrap">
       <div id="weaponName">ASSAULT RIFLE</div>
-      <div id="weaponSub">弾薬: --</div>
+      <div id="weaponSub">弾薬: 30/30</div>
       <div id="weaponSwatches">
         <div class="wsw active" data-w="AR">AR</div>
         <div class="wsw" data-w="SMG">SMG</div>
@@ -166,13 +167,13 @@
     </div>
     <div id="topInfo"><div id="aliveCount"></div><div id="zoneTimer"></div></div>
     <div id="killfeed"></div>
+    <div id="minimapWrap"><canvas id="minimapCanvas" width="120" height="120"></canvas></div>
   </div>
 
   <div id="touchControls">
     <div id="moveStick"><div id="moveBase"></div><div id="moveKnob"></div></div>
     <div id="lookZone"></div>
-    <div id="fireBtn"></div>
-    <div id="jumpBtn">JUMP</div>
+    <div id="fireBtn">FIRE</div>
   </div>
 
   <div id="resultScreen">
@@ -185,16 +186,14 @@
   <div id="gamepadTag">🎮 コントローラー接続中</div>
 </div>
 
-<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
-<!-- Three.js (軽量ビルド) -->
 <script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
 
 <script>
 /* =========================================================================
-   LOW POLY FPS - 単一ファイル実装
+   LOW POLY FPS - 単一ファイル実装 v2
    ========================================================================= */
 
 // ---------- Firebase 初期化 ----------
@@ -215,32 +214,43 @@ let myUid = null;
 let myName = null;
 
 const loginStatusEl = document.getElementById('loginStatus');
+const usernameInput = document.getElementById('usernameInput');
+usernameInput.value = localStorage.getItem('fps_username') || '';
+
 auth.signInAnonymously().catch(err => {
   loginStatusEl.textContent = "接続エラー: " + err.message;
 });
 auth.onAuthStateChanged(user => {
   if (user) {
     myUid = user.uid;
-    myName = "P" + myUid.slice(0, 4).toUpperCase();
-    loginStatusEl.textContent = "オンライン: " + myName;
+    loginStatusEl.textContent = "接続完了 (名前を入力してマッチング開始)";
   }
 });
+function resolveName() {
+  const v = usernameInput.value.trim();
+  myName = v ? v.slice(0, 10) : ("P" + myUid.slice(0, 4).toUpperCase());
+  localStorage.setItem('fps_username', v);
+  return myName;
+}
 
-// ---------- 武器定義 ----------
+// ---------- 武器定義(弾薬付き) ----------
 const WEAPONS = {
-  AR:  { label: "ASSAULT RIFLE", dmg: 18, rate: 130, spread: 0.018, auto: true,  reach: 140, color: 0xffcf6b },
-  SMG: { label: "SUB MACHINE GUN", dmg: 11, rate: 80,  spread: 0.038, auto: true,  reach: 70,  color: 0x6bffcf },
-  SR:  { label: "SNIPER RIFLE", dmg: 85, rate: 950, spread: 0.002, auto: false, reach: 400, color: 0xff6b8f }
+  AR:  { label: "ASSAULT RIFLE",   dmg: 18, rate: 130, spread: 0.018, auto: true,  reach: 140, color: 0xffcf6b, mag: 30, reloadMs: 1600 },
+  SMG: { label: "SUB MACHINE GUN", dmg: 11, rate: 80,  spread: 0.038, auto: true,  reach: 70,  color: 0x6bffcf, mag: 40, reloadMs: 1300 },
+  SR:  { label: "SNIPER RIFLE",    dmg: 85, rate: 950, spread: 0.002, auto: false, reach: 400, color: 0xff6b8f, mag: 5,  reloadMs: 2000 }
 };
 const WEAPON_ORDER = ["AR", "SMG", "SR"];
+let ammoState = {};
+function resetAmmo() {
+  ammoState = {};
+  for (const k of WEAPON_ORDER) ammoState[k] = { cur: WEAPONS[k].mag, reloading: false };
+}
+resetAmmo();
 
 // ---------- 横画面ロック ----------
 async function tryLockLandscape() {
-  try {
-    if (screen.orientation && screen.orientation.lock) {
-      await screen.orientation.lock('landscape');
-    }
-  } catch (e) { /* 対応してない端末は無視 */ }
+  try { if (screen.orientation && screen.orientation.lock) await screen.orientation.lock('landscape'); }
+  catch (e) {}
 }
 function checkOrientation() {
   const warn = document.getElementById('rotateWarn');
@@ -264,23 +274,44 @@ function uidColor(uid) {
    ゲームコア
    ========================================================================= */
 let scene, camera, renderer, clock;
-let groundMesh, zoneRing;
-let playerVel = new THREE.Vector3();
+let groundMesh, zoneRing, viewModelGroup;
 let playerPos = new THREE.Vector3(0, 1.6, 0);
 let yaw = 0, pitch = 0;
-let onGround = true;
 let currentRoomRef = null, currentRoomPath = null;
-let currentMode = null; // 'duel' | 'br'
-let players = {}; // uid -> {mesh, data, lastUpdate}
+let currentMode = null; // 'pw' | 'br'
+let useZoneForMatch = false;
+let players = {}; // uid -> {mesh, data, targetPos, targetRy}
 let myHp = 100, myAlive = true, myWeapon = "AR", lastShot = 0;
-let matchStartTime = 0, zoneInitialRadius = 60, zoneFinalRadius = 6, zoneShrinkDuration = 120; // 秒
+let matchStartTime = 0, zoneInitialRadius = 60, zoneFinalRadius = 6, zoneShrinkDuration = 120;
+let currentZoneRadius = zoneInitialRadius;
 let aliveCountVal = 2;
 let started = false;
 let pointerLocked = false;
 let inputMove = { x: 0, y: 0 };
-let inputLook = { x: 0, y: 0 };
-let wantFire = false, wantJump = false;
-let hitscanLine = null;
+let wantFire = false, lastFireHeld = false;
+let BUILDINGS = [];
+
+// 固定配置(全クライアント共通のマップにするため乱数を使わない)
+function buildLayout() {
+  BUILDINGS = [];
+  // 大きめの建物クラスタ(座標は固定シード的に手打ち)
+  const buildingSpots = [
+    [20, 20, 8, 7, 8], [-24, 18, 10, 9, 6], [30, -22, 7, 6, 7], [-18, -26, 9, 8, 9],
+    [0, 34, 12, 6, 6], [40, 4, 6, 10, 6], [-40, -6, 6, 7, 10], [8, -40, 8, 6, 8],
+    [-8, 42, 6, 8, 6], [46, -30, 7, 7, 7], [-46, 30, 8, 6, 8], [2, 0, 5, 5, 5]
+  ];
+  for (const [x, z, w, h, d] of buildingSpots) BUILDINGS.push({ x, z, w, h, d });
+
+  // 小さい障害物(木箱・岩)を円状に固定配置
+  const crateCount = 26;
+  for (let i = 0; i < crateCount; i++) {
+    const ang = (i / crateCount) * Math.PI * 2;
+    const rad = 14 + (i % 5) * 11;
+    const s = 1.6 + (i % 4) * 0.6;
+    BUILDINGS.push({ x: Math.cos(ang) * rad, z: Math.sin(ang) * rad, w: s, h: s, d: s, crate: true });
+  }
+}
+buildLayout();
 
 function initThree() {
   scene = new THREE.Scene();
@@ -292,7 +323,7 @@ function initThree() {
   renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'high-performance' });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
   renderer.setSize(window.innerWidth, window.innerHeight);
-  renderer.shadowMap.enabled = false; // 影オフで超軽量化
+  renderer.shadowMap.enabled = false;
   document.getElementById('app').appendChild(renderer.domElement);
 
   const hemi = new THREE.HemisphereLight(0xffffff, 0x445566, 1.0);
@@ -301,26 +332,31 @@ function initThree() {
   dir.position.set(40, 80, 20);
   scene.add(dir);
 
-  // 地面(ローポリ)
-  const groundGeo = new THREE.PlaneGeometry(400, 400, 20, 20);
+  const groundGeo = new THREE.PlaneGeometry(400, 400, 10, 10);
   const groundMat = new THREE.MeshLambertMaterial({ color: 0x4caf6b });
   groundMesh = new THREE.Mesh(groundGeo, groundMat);
   groundMesh.rotation.x = -Math.PI / 2;
   scene.add(groundMesh);
 
-  // 障害物(ローポリキューブ点在)
-  const obsMat = new THREE.MeshLambertMaterial({ color: 0x8a7a63 });
-  for (let i = 0; i < 26; i++) {
-    const s = 2 + Math.random() * 5;
-    const box = new THREE.Mesh(new THREE.BoxGeometry(s, s * (1 + Math.random()), s), obsMat);
-    const ang = Math.random() * Math.PI * 2;
-    const rad = 8 + Math.random() * 70;
-    box.position.set(Math.cos(ang) * rad, box.geometry.parameters.height / 2, Math.sin(ang) * rad);
-    box.userData.obstacle = true;
-    scene.add(box);
+  const wallMat = new THREE.MeshLambertMaterial({ color: 0xcdbfa5 });
+  const roofMat = new THREE.MeshLambertMaterial({ color: 0x8a5c46 });
+  const crateMat = new THREE.MeshLambertMaterial({ color: 0x8a7a63 });
+
+  for (const b of BUILDINGS) {
+    if (b.crate) {
+      const box = new THREE.Mesh(new THREE.BoxGeometry(b.w, b.h, b.d), crateMat);
+      box.position.set(b.x, b.h / 2, b.z);
+      scene.add(box);
+    } else {
+      const body = new THREE.Mesh(new THREE.BoxGeometry(b.w, b.h, b.d), wallMat);
+      body.position.set(b.x, b.h / 2, b.z);
+      scene.add(body);
+      const roof = new THREE.Mesh(new THREE.BoxGeometry(b.w * 1.08, b.h * 0.22, b.d * 1.08), roofMat);
+      roof.position.set(b.x, b.h + (b.h * 0.11), b.z);
+      scene.add(roof);
+    }
   }
 
-  // ゾーンリング(バトロワ用)
   const ringGeo = new THREE.RingGeometry(zoneInitialRadius - 0.4, zoneInitialRadius, 64);
   const ringMat = new THREE.MeshBasicMaterial({ color: 0x7fd7ff, side: THREE.DoubleSide, transparent: true, opacity: 0.7 });
   zoneRing = new THREE.Mesh(ringGeo, ringMat);
@@ -328,6 +364,12 @@ function initThree() {
   zoneRing.position.y = 0.05;
   zoneRing.visible = false;
   scene.add(zoneRing);
+
+  // 一人称ビューモデル(自分の銃・画面右寄り)
+  viewModelGroup = new THREE.Group();
+  camera.add(viewModelGroup);
+  scene.add(camera);
+  buildViewModel(myWeapon);
 
   window.addEventListener('resize', () => {
     camera.aspect = window.innerWidth / window.innerHeight;
@@ -339,8 +381,36 @@ function initThree() {
   clock = new THREE.Clock();
 }
 
-// ---------- 敵プレイヤー表現(ローポリ人形) ----------
-function makeCharacterMesh(color) {
+function buildViewModel(weaponKey) {
+  while (viewModelGroup.children.length) viewModelGroup.remove(viewModelGroup.children[0]);
+  const w = WEAPONS[weaponKey];
+  const mat = new THREE.MeshLambertMaterial({ color: w.color });
+  const darkMat = new THREE.MeshLambertMaterial({ color: 0x1c1c1c });
+  const gun = new THREE.Group();
+  let bodyLen = 0.55, barrelLen = 0.45;
+  if (weaponKey === 'SMG') { bodyLen = 0.34; barrelLen = 0.22; }
+  if (weaponKey === 'SR') { bodyLen = 0.7; barrelLen = 0.65; }
+  const body = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.14, bodyLen), darkMat);
+  const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, barrelLen, 6), mat);
+  barrel.rotation.x = Math.PI / 2;
+  barrel.position.z = -(bodyLen / 2 + barrelLen / 2);
+  const grip = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.18, 0.07), darkMat);
+  grip.position.set(0, -0.13, bodyLen / 2 - 0.05);
+  gun.add(body, barrel, grip);
+  if (weaponKey === 'SR') {
+    const scope = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 0.22, 6), darkMat);
+    scope.rotation.x = Math.PI / 2;
+    scope.position.set(0, 0.1, -0.05);
+    gun.add(scope);
+  }
+  // 画面右寄り・下寄りに配置
+  gun.position.set(0.32, -0.28, -0.55);
+  gun.rotation.y = -0.12;
+  viewModelGroup.add(gun);
+  viewModelGroup.userData.muzzleOffset = new THREE.Vector3(0.32, -0.24, -0.55 - bodyLen / 2 - barrelLen);
+}
+
+function makeCharacterMesh(color, name) {
   const g = new THREE.Group();
   const bodyMat = new THREE.MeshLambertMaterial({ color });
   const body = new THREE.Mesh(new THREE.BoxGeometry(0.7, 1.1, 0.4), bodyMat);
@@ -351,6 +421,24 @@ function makeCharacterMesh(color) {
   gun.position.set(0.4, 1.1, 0.3);
   g.add(body, head, gun);
   g.userData.hitBox = body;
+
+  // 名札(キャンバステクスチャの簡易スプライト)
+  const cv = document.createElement('canvas');
+  cv.width = 160; cv.height = 40;
+  const ctx = cv.getContext('2d');
+  ctx.fillStyle = 'rgba(6,10,20,0.55)';
+  ctx.fillRect(0, 0, 160, 40);
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 22px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(name || 'PLAYER', 80, 27);
+  const tex = new THREE.CanvasTexture(cv);
+  const spriteMat = new THREE.SpriteMaterial({ map: tex, depthTest: false });
+  const sprite = new THREE.Sprite(spriteMat);
+  sprite.scale.set(1.4, 0.35, 1);
+  sprite.position.y = 2.25;
+  g.add(sprite);
+
   return g;
 }
 
@@ -361,7 +449,7 @@ function spawnRandomPos(radius) {
 }
 
 /* =========================================================================
-   入力: キーボード / マウス / タッチ / ゲームパッド
+   入力
    ========================================================================= */
 const keys = {};
 document.addEventListener('keydown', e => {
@@ -374,13 +462,9 @@ document.addEventListener('keyup', e => keys[e.code] = false);
 
 const canvasHolder = document.getElementById('app');
 canvasHolder.addEventListener('click', () => {
-  if (started && renderer && !pointerLocked && !isTouchDevice()) {
-    renderer.domElement.requestPointerLock();
-  }
+  if (started && renderer && !pointerLocked && !isTouchDevice()) renderer.domElement.requestPointerLock();
 });
-document.addEventListener('pointerlockchange', () => {
-  pointerLocked = document.pointerLockElement === renderer?.domElement;
-});
+document.addEventListener('pointerlockchange', () => { pointerLocked = document.pointerLockElement === renderer?.domElement; });
 document.addEventListener('mousemove', e => {
   if (!pointerLocked) return;
   yaw -= e.movementX * 0.0022;
@@ -392,7 +476,6 @@ document.addEventListener('mouseup', e => { if (e.button === 0) wantFire = false
 
 function isTouchDevice() { return 'ontouchstart' in window; }
 
-// タッチ操作(仮想スティック)
 let moveTouchId = null, lookTouchId = null, lookLast = null;
 function setupTouchControls() {
   document.getElementById('touchControls').classList.add('show');
@@ -400,11 +483,8 @@ function setupTouchControls() {
   const moveKnob = document.getElementById('moveKnob');
   const lookZone = document.getElementById('lookZone');
   const fireBtn = document.getElementById('fireBtn');
-  const jumpBtn = document.getElementById('jumpBtn');
 
-  moveStick.addEventListener('touchstart', e => {
-    const t = e.changedTouches[0]; moveTouchId = t.identifier;
-  });
+  moveStick.addEventListener('touchstart', e => { moveTouchId = e.changedTouches[0].identifier; });
   moveStick.addEventListener('touchmove', e => {
     for (const t of e.changedTouches) {
       if (t.identifier !== moveTouchId) continue;
@@ -429,9 +509,7 @@ function setupTouchControls() {
   moveStick.addEventListener('touchend', resetMove);
   moveStick.addEventListener('touchcancel', resetMove);
 
-  lookZone.addEventListener('touchstart', e => {
-    const t = e.changedTouches[0]; lookTouchId = t.identifier; lookLast = { x: t.clientX, y: t.clientY };
-  });
+  lookZone.addEventListener('touchstart', e => { const t = e.changedTouches[0]; lookTouchId = t.identifier; lookLast = { x: t.clientX, y: t.clientY }; });
   lookZone.addEventListener('touchmove', e => {
     for (const t of e.changedTouches) {
       if (t.identifier !== lookTouchId) continue;
@@ -443,28 +521,17 @@ function setupTouchControls() {
     }
     e.preventDefault();
   }, { passive: false });
-  function resetLook(e) {
-    for (const t of e.changedTouches) if (t.identifier === lookTouchId) lookTouchId = null;
-  }
-  lookZone.addEventListener('touchend', resetLook);
-  lookZone.addEventListener('touchcancel', resetLook);
+  lookZone.addEventListener('touchend', e => { for (const t of e.changedTouches) if (t.identifier === lookTouchId) lookTouchId = null; });
+  lookZone.addEventListener('touchcancel', e => { for (const t of e.changedTouches) if (t.identifier === lookTouchId) lookTouchId = null; });
 
   fireBtn.addEventListener('touchstart', e => { wantFire = true; e.preventDefault(); }, { passive: false });
   fireBtn.addEventListener('touchend', () => wantFire = false);
-  jumpBtn.addEventListener('touchstart', e => { wantJump = true; e.preventDefault(); }, { passive: false });
-  jumpBtn.addEventListener('touchend', () => wantJump = false);
+  fireBtn.addEventListener('touchcancel', () => wantFire = false);
 }
 
-// ゲームパッド (Fortnite風: 左スティック移動 / 右スティック視点 / RT撃つ / A ジャンプ / LB RB 武器切替)
 let gpIndex = null;
-window.addEventListener('gamepadconnected', e => {
-  gpIndex = e.gamepad.index;
-  document.getElementById('gamepadTag').classList.add('show');
-});
-window.addEventListener('gamepaddisconnected', () => {
-  gpIndex = null;
-  document.getElementById('gamepadTag').classList.remove('show');
-});
+window.addEventListener('gamepadconnected', e => { gpIndex = e.gamepad.index; document.getElementById('gamepadTag').classList.add('show'); });
+window.addEventListener('gamepaddisconnected', () => { gpIndex = null; document.getElementById('gamepadTag').classList.remove('show'); });
 let lastBumperState = { lb: false, rb: false };
 function pollGamepad() {
   if (gpIndex === null) return;
@@ -480,7 +547,6 @@ function pollGamepad() {
   pitch -= ry * 0.045;
   pitch = Math.max(-1.3, Math.min(1.3, pitch));
   wantFire = gp.buttons[7] && gp.buttons[7].value > 0.3;
-  wantJump = gp.buttons[0] && gp.buttons[0].pressed;
   const lb = gp.buttons[4] && gp.buttons[4].pressed;
   const rb = gp.buttons[5] && gp.buttons[5].pressed;
   if (lb && !lastBumperState.lb) cycleWeapon(-1);
@@ -495,119 +561,87 @@ function cycleWeapon(dir) {
 }
 function setWeapon(w) {
   myWeapon = w;
-  document.getElementById('weaponName').textContent = WEAPONS[w].label;
   document.querySelectorAll('.wsw').forEach(el => el.classList.toggle('active', el.dataset.w === w));
+  if (camera) buildViewModel(w);
+  updateWeaponUI();
+}
+function updateWeaponUI() {
+  const w = WEAPONS[myWeapon];
+  const st = ammoState[myWeapon];
+  document.getElementById('weaponName').textContent = w.label;
+  document.getElementById('weaponSub').textContent = st.reloading ? 'リロード中...' : `弾薬: ${st.cur}/${w.mag}`;
 }
 document.querySelectorAll('.wsw').forEach(el => el.addEventListener('click', () => setWeapon(el.dataset.w)));
 
 /* =========================================================================
    ロビーUI
    ========================================================================= */
-const modeDuelBtn = document.getElementById('modeDuelBtn');
+const modePwBtn = document.getElementById('modePwBtn');
 const modeBrBtn = document.getElementById('modeBrBtn');
-const duelPanel = document.getElementById('duelPanel');
+const pwPanel = document.getElementById('pwPanel');
 const brPanel = document.getElementById('brPanel');
-modeDuelBtn.addEventListener('click', () => {
-  modeDuelBtn.classList.add('active'); modeBrBtn.classList.remove('active');
-  duelPanel.classList.add('show'); brPanel.classList.remove('show');
+modePwBtn.addEventListener('click', () => {
+  modePwBtn.classList.add('active'); modeBrBtn.classList.remove('active');
+  pwPanel.classList.add('show'); brPanel.classList.remove('show');
 });
 modeBrBtn.addEventListener('click', () => {
-  modeBrBtn.classList.add('active'); modeDuelBtn.classList.remove('active');
-  brPanel.classList.add('show'); duelPanel.classList.remove('show');
+  modeBrBtn.classList.add('active'); modePwBtn.classList.remove('active');
+  brPanel.classList.add('show'); pwPanel.classList.remove('show');
 });
 
-document.getElementById('duelStartBtn').addEventListener('click', startDuelMatch);
-document.getElementById('brStartBtn').addEventListener('click', startBrMatch);
+document.getElementById('pwStartBtn').addEventListener('click', () => startMatchmaking('pw'));
+document.getElementById('brStartBtn').addEventListener('click', () => startMatchmaking('br'));
 document.getElementById('backToLobbyBtn').addEventListener('click', () => location.reload());
 
-/* ---------- 1対1 (合言葉マッチング) ---------- */
-async function startDuelMatch() {
+const COUNTDOWN_SEC = 10;
+
+async function startMatchmaking(mode) {
   if (!myUid) return;
-  const passRaw = document.getElementById('duelPass').value;
-  if (!passRaw.trim()) { document.getElementById('duelStatus').textContent = "合言葉を入力してください"; return; }
-  const roomId = sanitizeKey(passRaw);
-  const roomPath = `duel/${roomId}`;
-  document.getElementById('duelStartBtn').disabled = true;
-  document.getElementById('duelStatus').textContent = "対戦相手を探しています...";
+  resolveName();
+  let roomPath, statusEl, startBtn;
+  if (mode === 'pw') {
+    const passRaw = document.getElementById('pwPass').value;
+    statusEl = document.getElementById('pwStatus');
+    startBtn = document.getElementById('pwStartBtn');
+    if (!passRaw.trim()) { statusEl.textContent = "合言葉を入力してください"; return; }
+    roomPath = `skirmish/${sanitizeKey(passRaw)}`;
+  } else {
+    roomPath = 'battleroyale/current';
+    statusEl = document.getElementById('brStatus');
+    startBtn = document.getElementById('brStartBtn');
+  }
+  startBtn.disabled = true;
+  statusEl.textContent = "参加者を探しています...";
 
   const roomRef = db.ref(roomPath);
-  const snap = await roomRef.once('value');
-  const data = snap.val();
-
-  if (!data || data.status === 'closed') {
-    // 部屋作成 (プレイヤー1)
-    await roomRef.set({
-      status: 'waiting',
-      createdAt: firebase.database.ServerValue.TIMESTAMP,
-      players: {
-        [myUid]: { name: myName, hp: 100, alive: true, x: -6, y: 1.6, z: 0, ry: 0, weapon: 'AR', joinedAt: firebase.database.ServerValue.TIMESTAMP }
-      }
-    });
-    listenForOpponentThenStart(roomRef, roomPath, 'duel');
-  } else {
-    const pcount = Object.keys(data.players || {}).length;
-    if (pcount >= 2 && !data.players[myUid]) {
-      document.getElementById('duelStatus').textContent = "その合言葉は使用中です。別の合言葉を試してください。";
-      document.getElementById('duelStartBtn').disabled = false;
-      return;
-    }
-    // プレイヤー2として参加
-    await roomRef.child(`players/${myUid}`).set({ name: myName, hp: 100, alive: true, x: 6, y: 1.6, z: 0, ry: Math.PI, weapon: 'AR', joinedAt: firebase.database.ServerValue.TIMESTAMP });
-    await roomRef.update({ status: 'active', matchStartTime: firebase.database.ServerValue.TIMESTAMP, aliveCount: 2 });
-    beginMatch(roomRef, roomPath, 'duel', new THREE.Vector3(6, 1.6, 0));
-  }
-}
-
-function listenForOpponentThenStart(roomRef, roomPath, mode) {
-  roomRef.on('value', snap => {
-    const data = snap.val();
-    if (!data) return;
-    const pcount = Object.keys(data.players || {}).length;
-    if (data.status === 'active' && pcount >= 2 && !started) {
-      roomRef.off('value');
-      beginMatch(roomRef, roomPath, mode, new THREE.Vector3(-6, 1.6, 0));
-    }
-  });
-}
-
-/* ---------- バトロワ (ランダムマッチ) ---------- */
-const BR_ROOM_PATH = 'battleroyale/current';
-async function startBrMatch() {
-  if (!myUid) return;
-  document.getElementById('brStartBtn').disabled = true;
-  document.getElementById('brStatus').textContent = "参加者を待っています...";
-  const roomRef = db.ref(BR_ROOM_PATH);
+  const spawn0 = spawnRandomPos(40);
+  const myData = { name: myName, hp: 100, alive: true, x: spawn0.x, y: 1.6, z: spawn0.z, ry: 0, weapon: 'AR' };
 
   await roomRef.transaction(cur => {
-    if (!cur || cur.status === 'finished' || !cur.status) {
-      return {
-        status: 'waiting',
-        createdAt: firebase.database.ServerValue.TIMESTAMP,
-        players: { [myUid]: { name: myName, hp: 100, alive: true, x: 0, y: 1.6, z: 0, ry: 0, weapon: 'AR' } }
-      };
+    if (!cur || cur.status === 'finished' || cur.status === 'closed' || !cur.status) {
+      return { status: 'waiting', createdAt: firebase.database.ServerValue.TIMESTAMP, players: { [myUid]: myData } };
     }
     if (cur.status === 'waiting') {
       cur.players = cur.players || {};
-      cur.players[myUid] = { name: myName, hp: 100, alive: true, x: 0, y: 1.6, z: 0, ry: 0, weapon: 'AR' };
+      cur.players[myUid] = myData;
       return cur;
     }
-    return cur; // active中は割り込まない(次のラウンド待ち)
+    return cur;
   });
 
   roomRef.on('value', snap => {
     const data = snap.val();
     if (!data) return;
     const pcount = Object.keys(data.players || {}).length;
+
     if (data.status === 'waiting') {
-      document.getElementById('brStatus').textContent = `待機中... 参加人数: ${pcount}人`;
-      // 2人以上集まったら短いカウントダウン後に開始(部屋作成者が起点)
       if (pcount >= 2 && !data.countdownStartedAt) {
-        roomRef.update({ countdownStartedAt: firebase.database.ServerValue.TIMESTAMP }).catch(()=>{});
+        roomRef.update({ countdownStartedAt: firebase.database.ServerValue.TIMESTAMP }).catch(() => {});
       }
       if (data.countdownStartedAt) {
         const elapsed = (Date.now() - data.countdownStartedAt) / 1000;
-        const remain = Math.max(0, 8 - elapsed);
-        document.getElementById('brStatus').textContent = `まもなく開始... ${Math.ceil(remain)}秒 (参加人数: ${pcount}人)`;
+        const remain = Math.max(0, COUNTDOWN_SEC - elapsed);
+        statusEl.textContent = `まもなく開始... ${Math.ceil(remain)}秒 (参加人数: ${pcount}人)`;
         if (remain <= 0 && !started) {
           roomRef.transaction(cur => {
             if (cur && cur.status === 'waiting') {
@@ -618,11 +652,13 @@ async function startBrMatch() {
             return cur;
           });
         }
+      } else {
+        statusEl.textContent = `待機中(あと1人以上必要)... 参加人数: ${pcount}人`;
       }
     } else if (data.status === 'active' && !started) {
       roomRef.off('value');
-      const spawn = spawnRandomPos(zoneInitialRadius);
-      beginMatch(roomRef, BR_ROOM_PATH, 'br', spawn);
+      const spawn = spawnRandomPos(mode === 'br' ? zoneInitialRadius : 40);
+      beginMatch(roomRef, roomPath, mode, spawn);
     }
   });
 }
@@ -634,8 +670,11 @@ function beginMatch(roomRef, roomPath, mode, spawnPos) {
   currentRoomRef = roomRef;
   currentRoomPath = roomPath;
   currentMode = mode;
+  useZoneForMatch = (mode === 'br');
   started = true;
-  myHp = 100; myAlive = true; setWeapon('AR');
+  myHp = 100; myAlive = true;
+  resetAmmo();
+  setWeapon('AR');
 
   document.getElementById('lobby').classList.add('hidden');
   document.getElementById('hud').classList.add('show');
@@ -644,46 +683,36 @@ function beginMatch(roomRef, roomPath, mode, spawnPos) {
   if (isTouchDevice()) setupTouchControls();
 
   if (!scene) initThree();
+  else buildViewModel(myWeapon);
 
   playerPos.copy(spawnPos);
   camera.position.copy(playerPos);
 
-  // ゾーン情報取得
-  roomRef.once('value').then(snap => {
-    const d = snap.val();
-    matchStartTime = d.matchStartTime || Date.now();
-  });
-  if (mode === 'br') {
+  roomRef.once('value').then(snap => { const d = snap.val(); matchStartTime = d.matchStartTime || Date.now(); });
+
+  if (useZoneForMatch) {
     zoneRing.visible = true;
-    document.getElementById('topInfo').style.display = 'block';
+    currentZoneRadius = zoneInitialRadius;
   } else {
     zoneRing.visible = false;
   }
 
-  // 自分の状態をDBへ反映
   updateHealthUI();
+  updateWeaponUI();
 
-  // 相手/他プレイヤーの購読
-  roomRef.child('players').on('child_added', snap => {
-    const uid = snap.key;
-    if (uid === myUid) return;
-    addRemotePlayer(uid, snap.val());
-  });
+  roomRef.child('players').on('child_added', snap => { const uid = snap.key; if (uid === myUid) return; addRemotePlayer(uid, snap.val()); });
   roomRef.child('players').on('child_changed', snap => {
     const uid = snap.key;
     if (uid === myUid) { handleMyRemoteState(snap.val()); return; }
     updateRemotePlayer(uid, snap.val());
   });
-  roomRef.child('players').on('child_removed', snap => {
-    removeRemotePlayer(snap.key);
-  });
+  roomRef.child('players').on('child_removed', snap => removeRemotePlayer(snap.key));
   roomRef.child('aliveCount').on('value', snap => {
     aliveCountVal = snap.val() || aliveCountVal;
     document.getElementById('aliveCount').textContent = `残り生存: ${aliveCountVal}人`;
   });
 
   window.addEventListener('beforeunload', cleanupOnExit);
-
   animate();
 }
 
@@ -697,12 +726,12 @@ function handleMyRemoteState(data) {
 }
 
 function addRemotePlayer(uid, data) {
-  const mesh = makeCharacterMesh(uidColor(uid));
+  const mesh = makeCharacterMesh(uidColor(uid), data.name);
   mesh.position.set(data.x || 0, 0, data.z || 0);
   mesh.rotation.y = data.ry || 0;
   mesh.visible = data.alive !== false;
   scene.add(mesh);
-  players[uid] = { mesh, data, lastUpdate: performance.now() };
+  players[uid] = { mesh, data };
 }
 function updateRemotePlayer(uid, data) {
   const p = players[uid];
@@ -724,47 +753,33 @@ function updateHealthUI() {
 
 function onMyDeath() {
   myAlive = false;
-  const roomRef = currentRoomRef;
-  roomRef.child(`players/${myUid}/alive`).set(false);
-
-  // 順位を決定(生存者数のトランザクション)
-  roomRef.child('aliveCount').transaction(cur => {
-    const c = (cur || aliveCountVal);
-    return Math.max(0, c - 1);
-  }).then(res => {
-    const rank = res.committed ? (res.snapshot.val() + 1) : aliveCountVal;
-    showResult(false, rank);
-  });
-
+  currentRoomRef.child(`players/${myUid}/alive`).set(false);
+  currentRoomRef.child('aliveCount').transaction(cur => Math.max(0, (cur || aliveCountVal) - 1))
+    .then(res => { const rank = res.committed ? (res.snapshot.val() + 1) : aliveCountVal; showResult(false, rank); });
   exitPointerLock();
 }
-
 function showResult(isWinner, rank) {
   const el = document.getElementById('resultScreen');
   document.getElementById('resultTitle').textContent = isWinner ? 'VICTORY' : 'DEFEATED';
   document.getElementById('resultRank').textContent = '#' + rank;
-  document.getElementById('resultSub').textContent = currentMode === 'br' ? 'バトルロイヤル結果' : '1対1 結果';
+  document.getElementById('resultSub').textContent = currentMode === 'br' ? 'バトルロイヤル結果' : '合言葉乱戦 結果';
   el.classList.add('show');
 }
+function exitPointerLock() { if (document.pointerLockElement) document.exitPointerLock(); }
+function cleanupOnExit() { if (currentRoomRef && myUid) currentRoomRef.child(`players/${myUid}`).remove(); }
 
-function exitPointerLock() {
-  if (document.pointerLockElement) document.exitPointerLock();
-}
-
-function cleanupOnExit() {
-  if (currentRoomRef && myUid) {
-    currentRoomRef.child(`players/${myUid}`).remove();
-  }
-}
-
-/* ---------- 射撃 ---------- */
+/* ---------- 射撃(見える弾・弾薬) ---------- */
 const raycaster = new THREE.Raycaster();
 function tryFire(now) {
   if (!myAlive) return;
   const w = WEAPONS[myWeapon];
+  const st = ammoState[myWeapon];
+  if (st.reloading) return;
+  if (st.cur <= 0) { startReload(); return; }
   if (now - lastShot < w.rate) return;
-  if (!w.auto && wantFire === lastFireHeld) { /* semi-autoは立ち上がりのみ処理(下部で管理) */ }
   lastShot = now;
+  st.cur -= 1;
+  updateWeaponUI();
 
   const dir = new THREE.Vector3();
   camera.getWorldDirection(dir);
@@ -777,13 +792,34 @@ function tryFire(now) {
   raycaster.far = w.reach;
   const targets = Object.values(players).map(p => p.mesh.userData.hitBox).filter(Boolean);
   const hits = raycaster.intersectObjects(targets, false);
+
+  const muzzleWorld = viewModelGroup.userData.muzzleOffset.clone();
+  camera.localToWorld(muzzleWorld);
+  const endPoint = hits.length > 0 ? hits[0].point.clone() : camera.position.clone().addScaledVector(dir, w.reach);
+  spawnTracer(muzzleWorld, endPoint, w.color);
+
   if (hits.length > 0) {
     const hitMesh = hits[0].object;
     const uid = Object.keys(players).find(k => players[k].mesh.userData.hitBox === hitMesh);
     if (uid) applyDamageTo(uid, w.dmg, hits[0].distance, w.reach);
   }
+  if (st.cur <= 0) startReload();
 }
-let lastFireHeld = false;
+function startReload() {
+  const w = WEAPONS[myWeapon];
+  const st = ammoState[myWeapon];
+  if (st.reloading) return;
+  st.reloading = true;
+  updateWeaponUI();
+  setTimeout(() => { st.cur = w.mag; st.reloading = false; updateWeaponUI(); }, w.reloadMs);
+}
+function spawnTracer(from, to, colorHex) {
+  const geo = new THREE.BufferGeometry().setFromPoints([from, to]);
+  const mat = new THREE.LineBasicMaterial({ color: colorHex, transparent: true, opacity: 0.9 });
+  const line = new THREE.Line(geo, mat);
+  scene.add(line);
+  setTimeout(() => { scene.remove(line); geo.dispose(); mat.dispose(); }, 90);
+}
 function applyDamageTo(uid, dmg, dist, reach) {
   const falloff = 1 - Math.min(0.5, (dist / reach) * 0.5);
   const finalDmg = Math.round(dmg * falloff);
@@ -795,15 +831,14 @@ function applyDamageTo(uid, dmg, dist, reach) {
 }
 function pushKillfeed(msg) {
   const el = document.createElement('div');
-  el.className = 'killmsg';
-  el.textContent = msg;
+  el.className = 'killmsg'; el.textContent = msg;
   const kf = document.getElementById('killfeed');
   kf.appendChild(el);
   setTimeout(() => el.remove(), 3000);
 }
 
-/* ---------- 移動 & 物理 ---------- */
-const GRAVITY = -22, JUMP_SPEED = 8.4, MOVE_SPEED = 6.2;
+/* ---------- 移動(ジャンプなし・水平移動のみ) ---------- */
+const MOVE_SPEED = 6.2;
 function updateMovement(dt) {
   if (!myAlive) return;
   const forward = new THREE.Vector3(Math.sin(yaw), 0, Math.cos(yaw)).multiplyScalar(-1);
@@ -814,29 +849,16 @@ function updateMovement(dt) {
   if (keys['KeyS']) mz += 1;
   if (keys['KeyA']) mx -= 1;
   if (keys['KeyD']) mx += 1;
-  mx += inputMove.x;
-  mz += inputMove.y;
+  mx += inputMove.x; mz += inputMove.y;
 
   const move = new THREE.Vector3();
   move.addScaledVector(forward, -mz);
   move.addScaledVector(right, mx);
   if (move.lengthSq() > 1) move.normalize();
 
-  playerVel.x = move.x * MOVE_SPEED;
-  playerVel.z = move.z * MOVE_SPEED;
-
-  const jumpPressed = keys['Space'] || wantJump;
-  if (jumpPressed && onGround) {
-    playerVel.y = JUMP_SPEED;
-    onGround = false;
-  }
-  playerVel.y += GRAVITY * dt;
-
-  playerPos.x += playerVel.x * dt;
-  playerPos.y += playerVel.y * dt;
-  playerPos.z += playerVel.z * dt;
-
-  if (playerPos.y <= 1.6) { playerPos.y = 1.6; playerVel.y = 0; onGround = true; }
+  playerPos.x += move.x * MOVE_SPEED * dt;
+  playerPos.z += move.z * MOVE_SPEED * dt;
+  playerPos.y = 1.6;
 
   camera.position.copy(playerPos);
   camera.rotation.order = 'YXZ';
@@ -844,23 +866,23 @@ function updateMovement(dt) {
   camera.rotation.x = pitch;
 }
 
-/* ---------- ゾーン (バトロワ) ---------- */
+/* ---------- ゾーン(バトロワのみ) ---------- */
 function updateZone() {
-  if (currentMode !== 'br' || !matchStartTime) return;
+  if (!useZoneForMatch || !matchStartTime) return;
   const elapsed = (Date.now() - matchStartTime) / 1000;
   const t = Math.min(1, elapsed / zoneShrinkDuration);
-  const radius = zoneInitialRadius + (zoneFinalRadius - zoneInitialRadius) * t;
+  currentZoneRadius = zoneInitialRadius + (zoneFinalRadius - zoneInitialRadius) * t;
   zoneRing.geometry.dispose();
-  zoneRing.geometry = new THREE.RingGeometry(Math.max(0.2, radius - 0.4), Math.max(0.5, radius), 64);
+  zoneRing.geometry = new THREE.RingGeometry(Math.max(0.2, currentZoneRadius - 0.4), Math.max(0.5, currentZoneRadius), 64);
 
   const remain = Math.max(0, zoneShrinkDuration - elapsed);
-  document.getElementById('zoneTimer').textContent = `安全地帯 半径${radius.toFixed(0)}m / 収縮まで${Math.ceil(remain)}秒`;
+  document.getElementById('zoneTimer').textContent = `安全地帯 半径${currentZoneRadius.toFixed(0)}m / 収縮まで${Math.ceil(remain)}秒`;
 
   if (myAlive) {
     const distFromCenter = Math.hypot(playerPos.x, playerPos.z);
-    if (distFromCenter > radius) {
+    if (distFromCenter > currentZoneRadius) {
       myHp -= 8 * (1 / 60);
-      if (myHp <= 0) { myHp = 0; }
+      if (myHp <= 0) myHp = 0;
       updateHealthUI();
       currentRoomRef.child(`players/${myUid}/hp`).set(Math.max(0, Math.round(myHp)));
       if (myHp <= 0 && myAlive) onMyDeath();
@@ -868,18 +890,15 @@ function updateZone() {
   }
 }
 
-/* ---------- ネットワーク送信(スロットル) ---------- */
+/* ---------- ネットワーク送信 ---------- */
 let lastNetSend = 0;
 function sendMyState(now) {
   if (!myAlive || !currentRoomRef) return;
   if (now - lastNetSend < 90) return;
   lastNetSend = now;
-  currentRoomRef.child(`players/${myUid}`).update({
-    x: playerPos.x, y: playerPos.y, z: playerPos.z, ry: yaw, weapon: myWeapon
-  });
+  currentRoomRef.child(`players/${myUid}`).update({ x: playerPos.x, y: playerPos.y, z: playerPos.z, ry: yaw, weapon: myWeapon });
 }
 
-/* ---------- リモートプレイヤー補間 ---------- */
 function interpolateRemotePlayers(dt) {
   for (const uid in players) {
     const p = players[uid];
@@ -891,27 +910,79 @@ function interpolateRemotePlayers(dt) {
   }
 }
 
-/* ---------- 全滅判定(勝利) ---------- */
 function checkWinCondition() {
   if (!started || !myAlive) return;
-  if (currentMode === 'br' && aliveCountVal <= 1) {
+  if (aliveCountVal <= 1) {
     showResult(true, 1);
-    currentRoomRef.update({ status: 'finished' });
+    currentRoomRef.update({ status: currentMode === 'br' ? 'finished' : 'closed' });
     started = false;
   }
-  if (currentMode === 'duel') {
-    const others = Object.values(players);
-    if (others.length > 0 && others.every(p => p.data && p.data.alive === false)) {
-      showResult(true, 1);
-      currentRoomRef.update({ status: 'closed' });
-      started = false;
-    }
+}
+
+/* ---------- ミニマップ ---------- */
+const mmCanvas = document.getElementById('minimapCanvas');
+const mmCtx = mmCanvas.getContext('2d');
+const MM_RANGE = 60; // 表示半径(ワールド単位)
+function drawMinimap() {
+  const size = 120, cx = size / 2, cy = size / 2;
+  mmCtx.clearRect(0, 0, size, size);
+  mmCtx.save();
+  mmCtx.beginPath(); mmCtx.arc(cx, cy, size / 2 - 2, 0, Math.PI * 2); mmCtx.clip();
+  mmCtx.fillStyle = 'rgba(60,110,60,0.35)';
+  mmCtx.fillRect(0, 0, size, size);
+
+  // 自分中心・自分の向きが上になるよう回転
+  const cosY = Math.cos(yaw), sinY = Math.sin(yaw);
+  function worldToMap(wx, wz) {
+    let dx = wx - playerPos.x, dz = wz - playerPos.z;
+    // yaw回転を打ち消して「前方=上」にする
+    const rx = dx * cosY - dz * sinY;
+    const rz = dx * sinY + dz * cosY;
+    const scale = (size / 2 - 6) / MM_RANGE;
+    return [cx + rx * scale, cy + rz * scale];
   }
+
+  // 建物
+  mmCtx.fillStyle = 'rgba(200,190,165,0.55)';
+  for (const b of BUILDINGS) {
+    const [mx, mz] = worldToMap(b.x, b.z);
+    if (Math.hypot(mx - cx, mz - cy) < size / 2) mmCtx.fillRect(mx - 2, mz - 2, 4, 4);
+  }
+
+  // ゾーン
+  if (useZoneForMatch) {
+    const scale = (size / 2 - 6) / MM_RANGE;
+    const [zx, zy] = worldToMap(0, 0);
+    mmCtx.strokeStyle = 'rgba(127,215,255,0.9)';
+    mmCtx.lineWidth = 2;
+    mmCtx.beginPath(); mmCtx.arc(zx, zy, currentZoneRadius * scale, 0, Math.PI * 2); mmCtx.stroke();
+  }
+
+  // 他プレイヤー
+  for (const uid in players) {
+    const p = players[uid];
+    if (!p.mesh.visible) continue;
+    const [mx, mz] = worldToMap(p.mesh.position.x, p.mesh.position.z);
+    if (Math.hypot(mx - cx, mz - cy) > size / 2 - 4) continue;
+    mmCtx.fillStyle = '#ff6b6b';
+    mmCtx.beginPath(); mmCtx.arc(mx, mz, 3.2, 0, Math.PI * 2); mmCtx.fill();
+  }
+
+  mmCtx.restore();
+
+  // 自分(常に中央・上向き三角形)
+  mmCtx.fillStyle = '#7fd7ff';
+  mmCtx.beginPath();
+  mmCtx.moveTo(cx, cy - 6);
+  mmCtx.lineTo(cx - 5, cy + 5);
+  mmCtx.lineTo(cx + 5, cy + 5);
+  mmCtx.closePath();
+  mmCtx.fill();
 }
 
 /* ---------- メインループ ---------- */
 function animate() {
-  if (!started && document.getElementById('resultScreen').classList.contains('show')) return;
+  if (!started) return;
   requestAnimationFrame(animate);
   const dt = Math.min(0.05, clock.getDelta());
   const now = performance.now();
@@ -922,26 +993,17 @@ function animate() {
   interpolateRemotePlayers(dt);
   sendMyState(now);
   checkWinCondition();
+  drawMinimap();
 
   const w = WEAPONS[myWeapon];
   if (wantFire) {
-    if (w.auto) {
-      tryFire(now);
-    } else if (!lastFireHeld) {
-      tryFire(now);
-    }
+    if (w.auto) tryFire(now);
+    else if (!lastFireHeld) tryFire(now);
   }
   lastFireHeld = wantFire;
 
   renderer.render(scene, camera);
 }
-
-/* ---------- 離脱時クリーンアップ ---------- */
-document.addEventListener('visibilitychange', () => {
-  if (document.hidden && currentRoomRef && myUid && !myAlive === false) {
-    // タブ非表示でもプレイ継続(離脱削除はbeforeunloadのみ)
-  }
-});
 </script>
 </body>
 </html>
