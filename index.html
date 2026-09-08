@@ -3,221 +3,201 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<title>雑巾カート</title>
+<title>LOW POLY FPS</title>
 <style>
-  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
-  html, body {
-    margin: 0; padding: 0; width: 100%; height: 100%;
-    overflow: hidden; background: #1b1f2a;
-    font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
-    touch-action: none;
-  }
-  #app { position: fixed; inset: 0; width: 100%; height: 100%; }
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; user-select:none; }
+  html, body { width:100%; height:100%; background:#000; overflow:hidden; font-family:'Segoe UI',sans-serif; }
+  #app { position:fixed; inset:0; }
+  canvas { display:block; touch-action:none; }
 
-  .screen {
-    position: absolute; inset: 0;
-    display: none;
-    flex-direction: column;
-    align-items: center; justify-content: center;
-    color: #fff;
-    padding: 24px;
+  /* ---------- 縦画面警告 ---------- */
+  #rotateWarn {
+    position:fixed; inset:0; background:#0a0a12; color:#fff; z-index:9999;
+    display:none; align-items:center; justify-content:center; flex-direction:column; text-align:center; gap:16px;
   }
-  .screen.active { display: flex; }
+  #rotateWarn.show { display:flex; }
+  #rotateWarn .icon { font-size:56px; animation:rot 1.4s ease-in-out infinite; }
+  @keyframes rot { 0%,100%{transform:rotate(0deg)} 50%{transform:rotate(90deg)} }
 
-  /* ---------- スタート画面 ---------- */
-  #startScreen { background: linear-gradient(160deg,#2b3a67,#1b1f2a 70%); }
-  .title {
-    font-size: 40px; font-weight: 900; letter-spacing: 2px;
-    background: linear-gradient(90deg,#ffe08a,#ff8ac4,#8ad0ff);
-    -webkit-background-clip: text; background-clip: text; color: transparent;
-    margin-bottom: 4px; text-align: center;
+  /* ---------- ロビー ---------- */
+  #lobby {
+    position:fixed; inset:0; z-index:50;
+    background:radial-gradient(circle at 50% 20%,#1c2333,#05070d 70%);
+    display:flex; align-items:center; justify-content:center; color:#fff;
   }
-  .subtitle { font-size: 13px; color: #b9c2e0; margin-bottom: 28px; text-align:center; }
-  .name-row { display:flex; align-items:center; gap:8px; margin-bottom: 22px; }
-  .name-row input {
-    padding: 10px 14px; border-radius: 10px; border: none; font-size: 15px;
-    width: 190px; background: #fff; color: #222;
+  #lobby.hidden{display:none;}
+  .lobbyCard {
+    width:min(560px,92vw); background:rgba(20,24,38,.85); border:1px solid #2e3a55;
+    border-radius:16px; padding:28px; backdrop-filter:blur(6px);
   }
-  .btn {
-    display: block; width: 260px; max-width: 82vw; padding: 16px 20px;
-    margin: 8px 0; border: none; border-radius: 16px;
-    font-size: 17px; font-weight: 800; color: #fff; cursor: pointer;
-    box-shadow: 0 6px 0 rgba(0,0,0,0.25);
-    transition: transform .05s;
+  .lobbyCard h1 { font-size:26px; letter-spacing:2px; text-align:center; margin-bottom:6px; color:#7fd7ff; }
+  .lobbyCard .sub { text-align:center; color:#8a93ad; font-size:12px; margin-bottom:20px; }
+  .modeBtns { display:flex; gap:10px; margin-bottom:14px; }
+  .modeBtn {
+    flex:1; padding:14px 8px; border-radius:10px; border:1px solid #3a4766; background:#161c2c; color:#cfd8f0;
+    font-size:14px; font-weight:600; cursor:pointer; transition:.15s;
   }
-  .btn:active { transform: translateY(4px); box-shadow: 0 2px 0 rgba(0,0,0,0.25); }
-  .btn.random { background: linear-gradient(180deg,#ff8a5b,#ef5a3d); }
-  .btn.friend { background: linear-gradient(180deg,#6bd0ff,#2f9adf); }
-  .btn.gray { background: linear-gradient(180deg,#8891a8,#5c6480); }
-  .btn.green { background: linear-gradient(180deg,#7be08a,#2fae52); }
+  .modeBtn.active { background:#2f6bff; border-color:#2f6bff; color:#fff; }
+  .panel { display:none; flex-direction:column; gap:10px; }
+  .panel.show { display:flex; }
+  input[type=text] {
+    width:100%; padding:12px; border-radius:8px; border:1px solid #3a4766; background:#0c1120; color:#fff; font-size:15px;
+  }
+  .bigBtn {
+    padding:14px; border-radius:10px; border:none; background:linear-gradient(135deg,#2f6bff,#7fd7ff);
+    color:#05070d; font-weight:800; font-size:15px; cursor:pointer; letter-spacing:1px;
+  }
+  .bigBtn:disabled{opacity:.5;}
+  .status { text-align:center; font-size:13px; color:#8a93ad; min-height:18px; }
+  .weaponInfo { display:flex; gap:8px; margin-top:6px; }
+  .weaponInfo div { flex:1; background:#0c1120; border:1px solid #26314c; border-radius:8px; padding:8px; font-size:11px; text-align:center; color:#9fb0d8;}
 
-  .friend-box {
-    margin-top: 6px; display:flex; flex-direction:column; align-items:center; gap:8px;
+  /* ---------- HUD ---------- */
+  #hud { position:fixed; inset:0; z-index:20; pointer-events:none; display:none; }
+  #hud.show { display:block; }
+  #crosshair {
+    position:absolute; top:50%; left:50%; width:16px; height:16px; transform:translate(-50%,-50%);
   }
-  .friend-box input {
-    padding: 12px 14px; border-radius: 10px; border: none; font-size: 16px;
-    width: 220px; text-align:center; background:#fff; color:#222;
+  #crosshair::before,#crosshair::after {
+    content:''; position:absolute; background:#e8f7ff; opacity:.85;
   }
-  .hint { font-size: 11px; color: #8f9ac0; margin-top: 4px; text-align:center; max-width: 280px; }
+  #crosshair::before{ left:7px; top:0; width:2px; height:16px; }
+  #crosshair::after{ top:7px; left:0; height:2px; width:16px; }
 
-  /* ---------- マッチング画面 ---------- */
-  #matchScreen { background: #1b1f2a; }
-  .spinner {
-    width: 56px; height: 56px; border-radius: 50%;
-    border: 6px solid #33395a; border-top-color: #ff8a5b;
-    animation: spin 0.9s linear infinite; margin-bottom: 20px;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .match-text { font-size: 16px; color: #dfe4ff; margin-bottom: 26px; }
+  #healthWrap { position:absolute; left:16px; bottom:16px; width:200px; pointer-events:none; }
+  #healthBar { height:16px; background:#1a1a1a; border-radius:8px; overflow:hidden; border:1px solid #333; }
+  #healthFill { height:100%; width:100%; background:linear-gradient(90deg,#ff5050,#ff9d50); transition:width .15s; }
+  #healthTxt { color:#fff; font-size:11px; margin-top:4px; text-shadow:0 1px 2px #000; }
 
-  /* ---------- レース画面 ---------- */
-  #raceScreen { padding: 0; }
-  #gameCanvas { position:absolute; inset:0; width:100%; height:100%; display:block; background:#c9b98a; }
+  #weaponWrap { position:absolute; right:16px; bottom:16px; text-align:right; }
+  #weaponName { color:#fff; font-size:16px; font-weight:800; text-shadow:0 1px 3px #000; }
+  #weaponSub { color:#9fb0d8; font-size:11px; }
+  #weaponSwatches { display:flex; gap:6px; margin-top:6px; justify-content:flex-end; pointer-events:auto; }
+  .wsw { width:40px; height:32px; border-radius:6px; background:rgba(20,24,38,.75); border:1px solid #3a4766; color:#cfd8f0; font-size:10px; display:flex; align-items:center; justify-content:center; cursor:pointer;}
+  .wsw.active{ border-color:#7fd7ff; color:#fff; background:#20365c;}
 
-  .hud {
-    position: absolute; top: 0; left: 0; right: 0;
-    display:flex; justify-content: space-between; align-items:flex-start;
-    padding: max(10px, env(safe-area-inset-top)) 14px 0 14px;
-    pointer-events: none; font-weight: 800;
-  }
-  .hud .box {
-    background: rgba(10,12,20,0.55); border-radius: 12px; padding: 8px 12px;
-    font-size: 14px; color:#fff; line-height:1.3;
-  }
-  .hud .lap-num { font-size: 20px; color:#ffe08a; }
+  #topInfo { position:absolute; top:14px; left:50%; transform:translateX(-50%); text-align:center; color:#fff; }
+  #topInfo #aliveCount { font-size:13px; color:#ffd27f; text-shadow:0 1px 2px #000; }
+  #topInfo #zoneTimer { font-size:11px; color:#9fb0d8; }
 
-  #countdownOverlay {
-    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
-    font-size: 90px; font-weight: 900; color:#fff; text-shadow: 0 0 20px rgba(0,0,0,0.6);
-    pointer-events:none; z-index: 5;
-  }
+  #killfeed { position:absolute; top:14px; right:14px; display:flex; flex-direction:column; gap:4px; align-items:flex-end; }
+  .killmsg { background:rgba(10,12,20,.7); color:#fff; font-size:11px; padding:4px 8px; border-radius:6px; }
 
-  .controls {
-    position:absolute; left:0; right:0; bottom:0;
-    display:flex; justify-content:space-between; align-items:flex-end;
-    padding: 0 16px max(14px, env(safe-area-inset-bottom)) 16px;
-    pointer-events:none;
+  /* 移動/照準/射撃 タッチUI */
+  #touchControls { position:fixed; inset:0; z-index:25; display:none; }
+  #touchControls.show{ display:block; }
+  #moveStick, #lookZone { position:absolute; pointer-events:auto; }
+  #moveStick { left:20px; bottom:20px; width:120px; height:120px; }
+  #lookZone { right:0; top:0; width:60%; height:100%; }
+  #moveBase { width:100%; height:100%; border-radius:50%; background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.25); }
+  #moveKnob { position:absolute; width:50px; height:50px; border-radius:50%; background:rgba(255,255,255,.35); left:35px; top:35px; }
+  #fireBtn {
+    position:absolute; right:26px; bottom:70px; width:78px; height:78px; border-radius:50%;
+    background:rgba(255,70,70,.35); border:2px solid rgba(255,120,120,.6); pointer-events:auto;
   }
-  .controls > * { pointer-events:auto; }
-
-  #wheelWrap {
-    width: 120px; height: 120px; border-radius: 50%;
-    background: radial-gradient(circle at 35% 30%, #4a5170, #262c42);
-    border: 5px solid #171b2b;
-    position: relative; touch-action:none;
-    box-shadow: 0 6px 14px rgba(0,0,0,0.4);
-  }
-  #wheelInner {
-    position:absolute; inset:10px; border-radius:50%;
-    border: 6px solid #cfd6f0;
-    display:flex; align-items:center; justify-content:center;
-  }
-  #wheelInner:after {
-    content:""; width:6px; height:38px; background:#ff8a5b; border-radius:3px;
-    position:absolute; top:8px;
+  #jumpBtn {
+    position:absolute; right:118px; bottom:30px; width:56px; height:56px; border-radius:50%;
+    background:rgba(255,255,255,.18); border:2px solid rgba(255,255,255,.4); pointer-events:auto;
+    color:#fff; font-size:11px; display:flex; align-items:center; justify-content:center;
   }
 
-  .pedals { display:flex; flex-direction:column; gap:12px; align-items:flex-end; }
-  .pedal {
-    width: 96px; height: 74px; border-radius: 18px;
-    display:flex; align-items:center; justify-content:center;
-    font-size: 16px; font-weight: 900; color:#fff;
-    box-shadow: 0 6px 0 rgba(0,0,0,0.3);
-    touch-action:none;
+  /* ---------- 死亡/結果画面 ---------- */
+  #resultScreen {
+    position:fixed; inset:0; z-index:60; background:rgba(4,6,12,.9); color:#fff;
+    display:none; align-items:center; justify-content:center; flex-direction:column; gap:14px; text-align:center;
   }
-  .pedal.accel { background: linear-gradient(180deg,#7be08a,#2fae52); }
-  .pedal.accel.on { background: linear-gradient(180deg,#a8ffb4,#3fce63); transform: translateY(4px); box-shadow:0 2px 0 rgba(0,0,0,0.3); }
-  .pedal.brake { background: linear-gradient(180deg,#ff8a8a,#e0413f); }
-  .pedal.brake.on { background: linear-gradient(180deg,#ffb3b3,#ff5a57); transform: translateY(4px); box-shadow:0 2px 0 rgba(0,0,0,0.3); }
-  .pedal.drift-glow { box-shadow: 0 0 0 4px #ffe08a, 0 6px 0 rgba(0,0,0,0.3); }
+  #resultScreen.show{ display:flex; }
+  #resultScreen h2 { font-size:34px; letter-spacing:2px; color:#ffd27f; }
+  #resultScreen .rankNum { font-size:56px; font-weight:900; color:#7fd7ff; }
+  #resultScreen button { margin-top:10px; }
 
-  /* ---------- 結果画面 ---------- */
-  #resultScreen { background: linear-gradient(160deg,#2b3a67,#1b1f2a 70%); }
-  .result-title { font-size: 30px; font-weight:900; margin-bottom: 6px; }
-  .result-title.win { color:#ffe08a; }
-  .result-title.lose { color:#9db0e0; }
-  .result-row {
-    width: 280px; max-width: 84vw; display:flex; justify-content:space-between;
-    background: rgba(255,255,255,0.08); border-radius: 12px; padding: 12px 16px; margin: 6px 0;
-    font-size: 15px;
+  #gamepadTag {
+    position:fixed; bottom:8px; left:50%; transform:translateX(-50%); z-index:70; color:#7fffb0;
+    font-size:11px; background:rgba(0,0,0,.5); padding:4px 10px; border-radius:8px; display:none;
   }
-  .result-row.me { border: 2px solid #ffe08a; }
-
-  #statusLine { position:fixed; bottom:6px; left:0; right:0; text-align:center; font-size:10px; color:#5a6280; }
+  #gamepadTag.show{ display:block; }
 </style>
 </head>
 <body>
 <div id="app">
+  <div id="rotateWarn"><div class="icon">📱</div><div>横画面にしてください<br><span style="font-size:12px;color:#8a93ad">Rotate your device to landscape</span></div></div>
 
-  <!-- ================= スタート画面 ================= -->
-  <div id="startScreen" class="screen active">
-    <div class="title">🧼 雑巾カート 🧽</div>
-    <div class="subtitle">床をすべる雑巾で3周勝負！</div>
+  <div id="lobby">
+    <div class="lobbyCard">
+      <h1>LOW POLY FPS</h1>
+      <div class="sub">超軽量ポリゴン シューティング</div>
 
-    <div class="name-row">
-      <input id="nameInput" type="text" maxlength="8" placeholder="なまえ">
-    </div>
+      <div class="modeBtns">
+        <button class="modeBtn active" id="modeDuelBtn">1対1 (合言葉)</button>
+        <button class="modeBtn" id="modeBrBtn">バトロワ</button>
+      </div>
 
-    <button class="btn random" id="randomBtn">🎲 ランダムマッチ</button>
+      <div class="panel show" id="duelPanel">
+        <input type="text" id="duelPass" placeholder="合言葉を入力 (相手と同じ言葉)" maxlength="24">
+        <button class="bigBtn" id="duelStartBtn">マッチング開始</button>
+        <div class="status" id="duelStatus"></div>
+      </div>
 
-    <div class="friend-box">
-      <input id="keywordInput" type="text" maxlength="12" placeholder="あいことば">
-      <button class="btn friend" id="friendBtn">🔑 フレンドマッチ</button>
-      <div class="hint">同じ「あいことば」を入力した人同士でマッチングします</div>
+      <div class="panel" id="brPanel">
+        <button class="bigBtn" id="brStartBtn">バトロワに参加</button>
+        <div class="status" id="brStatus"></div>
+      </div>
+
+      <div class="weaponInfo">
+        <div><b>AR</b><br>連射・バランス型</div>
+        <div><b>SMG</b><br>近距離・高連射</div>
+        <div><b>SR</b><br>単発・高火力</div>
+      </div>
+      <div class="status" id="loginStatus">接続中...</div>
     </div>
   </div>
 
-  <!-- ================= マッチング画面 ================= -->
-  <div id="matchScreen" class="screen">
-    <div class="spinner"></div>
-    <div class="match-text" id="matchText">対戦相手をさがしています…</div>
-    <button class="btn green" id="practiceBtn">🏃 待っている間に練習する</button>
-    <button class="btn gray" id="cancelMatchBtn">キャンセル</button>
-  </div>
-
-  <!-- ================= レース画面 ================= -->
-  <div id="raceScreen" class="screen">
-    <canvas id="gameCanvas"></canvas>
-
-    <div class="hud">
-      <div class="box">LAP<br><span class="lap-num" id="lapText">1/3</span></div>
-      <div class="box" id="opponentBox">相手<br>LAP 1/3</div>
-      <div class="box" id="timerText">00:00.0</div>
-    </div>
-
-    <div id="countdownOverlay"></div>
-
-    <button class="btn gray" id="practiceBackBtn" style="position:absolute; top:max(70px, env(safe-area-inset-top)); left:14px; width:auto; padding:10px 16px; font-size:13px; display:none; z-index:6;">← マッチング画面へ</button>
-
-    <div class="controls">
-      <div id="wheelWrap"><div id="wheelInner"></div></div>
-      <div class="pedals">
-        <div class="pedal accel" id="accelBtn">アクセル</div>
-        <div class="pedal brake" id="brakeBtn">ブレーキ</div>
+  <div id="hud">
+    <div id="crosshair"></div>
+    <div id="healthWrap"><div id="healthBar"><div id="healthFill"></div></div><div id="healthTxt">HP 100</div></div>
+    <div id="weaponWrap">
+      <div id="weaponName">ASSAULT RIFLE</div>
+      <div id="weaponSub">弾薬: --</div>
+      <div id="weaponSwatches">
+        <div class="wsw active" data-w="AR">AR</div>
+        <div class="wsw" data-w="SMG">SMG</div>
+        <div class="wsw" data-w="SR">SR</div>
       </div>
     </div>
+    <div id="topInfo"><div id="aliveCount"></div><div id="zoneTimer"></div></div>
+    <div id="killfeed"></div>
   </div>
 
-  <!-- ================= 結果画面 ================= -->
-  <div id="resultScreen" class="screen">
-    <div class="result-title" id="resultTitle">RESULT</div>
-    <div class="result-row me" id="rowMe"></div>
-    <div class="result-row" id="rowOpp"></div>
-    <button class="btn green" id="backBtn" style="margin-top:24px;">タイトルへもどる</button>
+  <div id="touchControls">
+    <div id="moveStick"><div id="moveBase"></div><div id="moveKnob"></div></div>
+    <div id="lookZone"></div>
+    <div id="fireBtn"></div>
+    <div id="jumpBtn">JUMP</div>
   </div>
 
+  <div id="resultScreen">
+    <h2 id="resultTitle">DEFEATED</h2>
+    <div class="rankNum" id="resultRank">#--</div>
+    <div id="resultSub" style="color:#9fb0d8;font-size:13px;"></div>
+    <button class="bigBtn" id="backToLobbyBtn" style="width:220px;">ロビーへ戻る</button>
+  </div>
+
+  <div id="gamepadTag">🎮 コントローラー接続中</div>
 </div>
-<div id="statusLine"></div>
 
-<!-- Firebase (compat SDK) -->
-<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<!-- Three.js (軽量ビルド) -->
+<script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
 
 <script>
-/* =====================================================================
-   Firebase 初期化
-===================================================================== */
+/* =========================================================================
+   LOW POLY FPS - 単一ファイル実装
+   ========================================================================= */
+
+// ---------- Firebase 初期化 ----------
 const firebaseConfig = {
   apiKey: "AIzaSyDWxhILNkj0RrOV248Bh2zoFZfNq2G-3N0",
   authDomain: "zoukin-kart.firebaseapp.com",
@@ -229,702 +209,739 @@ const firebaseConfig = {
 };
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
-const db = firebase.firestore();
+const db = firebase.database();
 
-let uid = null;
-let myName = "プレイヤー";
+let myUid = null;
+let myName = null;
 
-const statusLine = document.getElementById('statusLine');
-function setStatus(t){ statusLine.textContent = t; }
-
+const loginStatusEl = document.getElementById('loginStatus');
+auth.signInAnonymously().catch(err => {
+  loginStatusEl.textContent = "接続エラー: " + err.message;
+});
 auth.onAuthStateChanged(user => {
   if (user) {
-    uid = user.uid;
-    setStatus("接続OK: " + uid.slice(0,6));
+    myUid = user.uid;
+    myName = "P" + myUid.slice(0, 4).toUpperCase();
+    loginStatusEl.textContent = "オンライン: " + myName;
   }
 });
-auth.signInAnonymously().catch(err => {
-  setStatus("ログイン失敗: " + err.message + "（Firebaseコンソールで匿名認証を有効にしてください）");
-});
 
-/* =====================================================================
-   画面切り替え
-===================================================================== */
-const screens = {
-  start: document.getElementById('startScreen'),
-  match: document.getElementById('matchScreen'),
-  race: document.getElementById('raceScreen'),
-  result: document.getElementById('resultScreen'),
+// ---------- 武器定義 ----------
+const WEAPONS = {
+  AR:  { label: "ASSAULT RIFLE", dmg: 18, rate: 130, spread: 0.018, auto: true,  reach: 140, color: 0xffcf6b },
+  SMG: { label: "SUB MACHINE GUN", dmg: 11, rate: 80,  spread: 0.038, auto: true,  reach: 70,  color: 0x6bffcf },
+  SR:  { label: "SNIPER RIFLE", dmg: 85, rate: 950, spread: 0.002, auto: false, reach: 400, color: 0xff6b8f }
 };
-function showScreen(name){
-  Object.values(screens).forEach(s => s.classList.remove('active'));
-  screens[name].classList.add('active');
-}
+const WEAPON_ORDER = ["AR", "SMG", "SR"];
 
-/* =====================================================================
-   マッチメイキング（サーバーレス / Firestoreのみで実現）
-   - queue_random / queue_friend コレクションに自分のドキュメントを作成
-   - ドキュメントIDの昇順で先頭2件をペアとみなす
-   - 先頭(=initiator)がroomを作成し、2番目のドキュメントに matchedRoom を書き込む
-   - 2番目は自分のドキュメントの matchedRoom を監視して部屋に合流する
-===================================================================== */
-let queueUnsub = null;
-let myQueueRef = null;
-let currentRoomId = null;
-let roomUnsub = null;
-
-function cleanupQueue(){
-  if (queueUnsub){ queueUnsub(); queueUnsub = null; }
-  if (myQueueRef){ myQueueRef.delete().catch(()=>{}); myQueueRef = null; }
-}
-
-async function startMatching(mode, keyword){
-  if (!uid){ alert("接続中です。少し待ってからもう一度お試しください"); return; }
-  myName = (document.getElementById('nameInput').value || "プレイヤー").trim().slice(0,8) || "プレイヤー";
-  showScreen('match');
-  document.getElementById('matchText').textContent =
-    mode === 'friend' ? `「${keyword}」で対戦相手をさがしています…` : "対戦相手をさがしています…";
-
-  const colName = mode === 'friend' ? 'queue_friend' : 'queue_random';
-  const col = db.collection(colName);
-
-  const docData = {
-    uid, name: myName,
-    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-    matchedRoom: null
-  };
-  if (mode === 'friend') docData.keyword = keyword;
-
-  myQueueRef = await col.add(docData);
-
-  // 自分のドキュメントを監視 → matchedRoom が付いたら合流（2番手の場合）
-  const myDocUnsub = myQueueRef.onSnapshot(snap => {
-    const d = snap.data();
-    if (d && d.matchedRoom){
-      myDocUnsub();
-      if (queueUnsub) queueUnsub();
-      myQueueRef.delete().catch(()=>{});
-      myQueueRef = null;
-      joinRoom(d.matchedRoom, mode === 'friend' ? 2 : 2, true);
+// ---------- 横画面ロック ----------
+async function tryLockLandscape() {
+  try {
+    if (screen.orientation && screen.orientation.lock) {
+      await screen.orientation.lock('landscape');
     }
+  } catch (e) { /* 対応してない端末は無視 */ }
+}
+function checkOrientation() {
+  const warn = document.getElementById('rotateWarn');
+  if (window.innerHeight > window.innerWidth) warn.classList.add('show');
+  else warn.classList.remove('show');
+}
+window.addEventListener('resize', checkOrientation);
+checkOrientation();
+
+// ---------- ユーティリティ ----------
+function sanitizeKey(str) {
+  return encodeURIComponent(str.trim().toLowerCase()).replace(/[.#$\[\]%]/g, '_').slice(0, 60) || 'room';
+}
+function uidColor(uid) {
+  let h = 0;
+  for (let i = 0; i < uid.length; i++) h = (h * 31 + uid.charCodeAt(i)) >>> 0;
+  return new THREE.Color().setHSL((h % 360) / 360, 0.65, 0.55);
+}
+
+/* =========================================================================
+   ゲームコア
+   ========================================================================= */
+let scene, camera, renderer, clock;
+let groundMesh, zoneRing;
+let playerVel = new THREE.Vector3();
+let playerPos = new THREE.Vector3(0, 1.6, 0);
+let yaw = 0, pitch = 0;
+let onGround = true;
+let currentRoomRef = null, currentRoomPath = null;
+let currentMode = null; // 'duel' | 'br'
+let players = {}; // uid -> {mesh, data, lastUpdate}
+let myHp = 100, myAlive = true, myWeapon = "AR", lastShot = 0;
+let matchStartTime = 0, zoneInitialRadius = 60, zoneFinalRadius = 6, zoneShrinkDuration = 120; // 秒
+let aliveCountVal = 2;
+let started = false;
+let pointerLocked = false;
+let inputMove = { x: 0, y: 0 };
+let inputLook = { x: 0, y: 0 };
+let wantFire = false, wantJump = false;
+let hitscanLine = null;
+
+function initThree() {
+  scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x9fd3ff);
+  scene.fog = new THREE.Fog(0x9fd3ff, 60, 260);
+
+  camera = new THREE.PerspectiveCamera(78, window.innerWidth / window.innerHeight, 0.1, 500);
+
+  renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'high-performance' });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.shadowMap.enabled = false; // 影オフで超軽量化
+  document.getElementById('app').appendChild(renderer.domElement);
+
+  const hemi = new THREE.HemisphereLight(0xffffff, 0x445566, 1.0);
+  scene.add(hemi);
+  const dir = new THREE.DirectionalLight(0xffffff, 0.6);
+  dir.position.set(40, 80, 20);
+  scene.add(dir);
+
+  // 地面(ローポリ)
+  const groundGeo = new THREE.PlaneGeometry(400, 400, 20, 20);
+  const groundMat = new THREE.MeshLambertMaterial({ color: 0x4caf6b });
+  groundMesh = new THREE.Mesh(groundGeo, groundMat);
+  groundMesh.rotation.x = -Math.PI / 2;
+  scene.add(groundMesh);
+
+  // 障害物(ローポリキューブ点在)
+  const obsMat = new THREE.MeshLambertMaterial({ color: 0x8a7a63 });
+  for (let i = 0; i < 26; i++) {
+    const s = 2 + Math.random() * 5;
+    const box = new THREE.Mesh(new THREE.BoxGeometry(s, s * (1 + Math.random()), s), obsMat);
+    const ang = Math.random() * Math.PI * 2;
+    const rad = 8 + Math.random() * 70;
+    box.position.set(Math.cos(ang) * rad, box.geometry.parameters.height / 2, Math.sin(ang) * rad);
+    box.userData.obstacle = true;
+    scene.add(box);
+  }
+
+  // ゾーンリング(バトロワ用)
+  const ringGeo = new THREE.RingGeometry(zoneInitialRadius - 0.4, zoneInitialRadius, 64);
+  const ringMat = new THREE.MeshBasicMaterial({ color: 0x7fd7ff, side: THREE.DoubleSide, transparent: true, opacity: 0.7 });
+  zoneRing = new THREE.Mesh(ringGeo, ringMat);
+  zoneRing.rotation.x = -Math.PI / 2;
+  zoneRing.position.y = 0.05;
+  zoneRing.visible = false;
+  scene.add(zoneRing);
+
+  window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    checkOrientation();
   });
 
-  // 待機列全体を監視 → 自分が先頭(initiator)なら部屋を作る（1番手の場合）
-  let q = col.orderBy(firebase.firestore.FieldPath.documentId());
-  if (mode === 'friend') q = col.where('keyword', '==', keyword)
-                                 .orderBy(firebase.firestore.FieldPath.documentId());
+  clock = new THREE.Clock();
+}
 
-  queueUnsub = q.onSnapshot(async snap => {
-    const docs = snap.docs.filter(d => !d.data().matchedRoom);
-    if (docs.length < 2 || !myQueueRef) return;
-    const first = docs[0], second = docs[1];
-    if (first.id !== myQueueRef.id) return; // 自分が先頭でなければ待つ
+// ---------- 敵プレイヤー表現(ローポリ人形) ----------
+function makeCharacterMesh(color) {
+  const g = new THREE.Group();
+  const bodyMat = new THREE.MeshLambertMaterial({ color });
+  const body = new THREE.Mesh(new THREE.BoxGeometry(0.7, 1.1, 0.4), bodyMat);
+  body.position.y = 1.0;
+  const head = new THREE.Mesh(new THREE.ConeGeometry(0.32, 0.5, 6), bodyMat);
+  head.position.y = 1.8;
+  const gun = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.14, 0.6), new THREE.MeshLambertMaterial({ color: 0x222222 }));
+  gun.position.set(0.4, 1.1, 0.3);
+  g.add(body, head, gun);
+  g.userData.hitBox = body;
+  return g;
+}
 
-    // 自分(先頭)がルーム作成
-    if (queueUnsub) { queueUnsub(); queueUnsub = null; }
-    try {
-      const roomRef = await db.collection('rooms').add({
+function spawnRandomPos(radius) {
+  const ang = Math.random() * Math.PI * 2;
+  const rad = Math.random() * radius * 0.8;
+  return new THREE.Vector3(Math.cos(ang) * rad, 1.6, Math.sin(ang) * rad);
+}
+
+/* =========================================================================
+   入力: キーボード / マウス / タッチ / ゲームパッド
+   ========================================================================= */
+const keys = {};
+document.addEventListener('keydown', e => {
+  keys[e.code] = true;
+  if (e.code === 'Digit1') setWeapon('AR');
+  if (e.code === 'Digit2') setWeapon('SMG');
+  if (e.code === 'Digit3') setWeapon('SR');
+});
+document.addEventListener('keyup', e => keys[e.code] = false);
+
+const canvasHolder = document.getElementById('app');
+canvasHolder.addEventListener('click', () => {
+  if (started && renderer && !pointerLocked && !isTouchDevice()) {
+    renderer.domElement.requestPointerLock();
+  }
+});
+document.addEventListener('pointerlockchange', () => {
+  pointerLocked = document.pointerLockElement === renderer?.domElement;
+});
+document.addEventListener('mousemove', e => {
+  if (!pointerLocked) return;
+  yaw -= e.movementX * 0.0022;
+  pitch -= e.movementY * 0.0022;
+  pitch = Math.max(-1.3, Math.min(1.3, pitch));
+});
+document.addEventListener('mousedown', e => { if (pointerLocked && e.button === 0) wantFire = true; });
+document.addEventListener('mouseup', e => { if (e.button === 0) wantFire = false; });
+
+function isTouchDevice() { return 'ontouchstart' in window; }
+
+// タッチ操作(仮想スティック)
+let moveTouchId = null, lookTouchId = null, lookLast = null;
+function setupTouchControls() {
+  document.getElementById('touchControls').classList.add('show');
+  const moveStick = document.getElementById('moveStick');
+  const moveKnob = document.getElementById('moveKnob');
+  const lookZone = document.getElementById('lookZone');
+  const fireBtn = document.getElementById('fireBtn');
+  const jumpBtn = document.getElementById('jumpBtn');
+
+  moveStick.addEventListener('touchstart', e => {
+    const t = e.changedTouches[0]; moveTouchId = t.identifier;
+  });
+  moveStick.addEventListener('touchmove', e => {
+    for (const t of e.changedTouches) {
+      if (t.identifier !== moveTouchId) continue;
+      const rect = moveStick.getBoundingClientRect();
+      let dx = (t.clientX - rect.left - rect.width / 2) / (rect.width / 2);
+      let dy = (t.clientY - rect.top - rect.height / 2) / (rect.height / 2);
+      const len = Math.hypot(dx, dy);
+      if (len > 1) { dx /= len; dy /= len; }
+      inputMove.x = dx; inputMove.y = dy;
+      moveKnob.style.left = (35 + dx * 35) + 'px';
+      moveKnob.style.top = (35 + dy * 35) + 'px';
+    }
+    e.preventDefault();
+  }, { passive: false });
+  function resetMove(e) {
+    for (const t of e.changedTouches) {
+      if (t.identifier !== moveTouchId) continue;
+      inputMove.x = 0; inputMove.y = 0; moveTouchId = null;
+      moveKnob.style.left = '35px'; moveKnob.style.top = '35px';
+    }
+  }
+  moveStick.addEventListener('touchend', resetMove);
+  moveStick.addEventListener('touchcancel', resetMove);
+
+  lookZone.addEventListener('touchstart', e => {
+    const t = e.changedTouches[0]; lookTouchId = t.identifier; lookLast = { x: t.clientX, y: t.clientY };
+  });
+  lookZone.addEventListener('touchmove', e => {
+    for (const t of e.changedTouches) {
+      if (t.identifier !== lookTouchId) continue;
+      const dx = t.clientX - lookLast.x, dy = t.clientY - lookLast.y;
+      yaw -= dx * 0.0035;
+      pitch -= dy * 0.0035;
+      pitch = Math.max(-1.3, Math.min(1.3, pitch));
+      lookLast = { x: t.clientX, y: t.clientY };
+    }
+    e.preventDefault();
+  }, { passive: false });
+  function resetLook(e) {
+    for (const t of e.changedTouches) if (t.identifier === lookTouchId) lookTouchId = null;
+  }
+  lookZone.addEventListener('touchend', resetLook);
+  lookZone.addEventListener('touchcancel', resetLook);
+
+  fireBtn.addEventListener('touchstart', e => { wantFire = true; e.preventDefault(); }, { passive: false });
+  fireBtn.addEventListener('touchend', () => wantFire = false);
+  jumpBtn.addEventListener('touchstart', e => { wantJump = true; e.preventDefault(); }, { passive: false });
+  jumpBtn.addEventListener('touchend', () => wantJump = false);
+}
+
+// ゲームパッド (Fortnite風: 左スティック移動 / 右スティック視点 / RT撃つ / A ジャンプ / LB RB 武器切替)
+let gpIndex = null;
+window.addEventListener('gamepadconnected', e => {
+  gpIndex = e.gamepad.index;
+  document.getElementById('gamepadTag').classList.add('show');
+});
+window.addEventListener('gamepaddisconnected', () => {
+  gpIndex = null;
+  document.getElementById('gamepadTag').classList.remove('show');
+});
+let lastBumperState = { lb: false, rb: false };
+function pollGamepad() {
+  if (gpIndex === null) return;
+  const gp = navigator.getGamepads()[gpIndex];
+  if (!gp) return;
+  const dead = 0.15;
+  const lx = Math.abs(gp.axes[0]) > dead ? gp.axes[0] : 0;
+  const ly = Math.abs(gp.axes[1]) > dead ? gp.axes[1] : 0;
+  const rx = Math.abs(gp.axes[2]) > dead ? gp.axes[2] : 0;
+  const ry = Math.abs(gp.axes[3]) > dead ? gp.axes[3] : 0;
+  inputMove.x = lx; inputMove.y = ly;
+  yaw -= rx * 0.045;
+  pitch -= ry * 0.045;
+  pitch = Math.max(-1.3, Math.min(1.3, pitch));
+  wantFire = gp.buttons[7] && gp.buttons[7].value > 0.3;
+  wantJump = gp.buttons[0] && gp.buttons[0].pressed;
+  const lb = gp.buttons[4] && gp.buttons[4].pressed;
+  const rb = gp.buttons[5] && gp.buttons[5].pressed;
+  if (lb && !lastBumperState.lb) cycleWeapon(-1);
+  if (rb && !lastBumperState.rb) cycleWeapon(1);
+  lastBumperState = { lb, rb };
+}
+
+function cycleWeapon(dir) {
+  let idx = WEAPON_ORDER.indexOf(myWeapon);
+  idx = (idx + dir + WEAPON_ORDER.length) % WEAPON_ORDER.length;
+  setWeapon(WEAPON_ORDER[idx]);
+}
+function setWeapon(w) {
+  myWeapon = w;
+  document.getElementById('weaponName').textContent = WEAPONS[w].label;
+  document.querySelectorAll('.wsw').forEach(el => el.classList.toggle('active', el.dataset.w === w));
+}
+document.querySelectorAll('.wsw').forEach(el => el.addEventListener('click', () => setWeapon(el.dataset.w)));
+
+/* =========================================================================
+   ロビーUI
+   ========================================================================= */
+const modeDuelBtn = document.getElementById('modeDuelBtn');
+const modeBrBtn = document.getElementById('modeBrBtn');
+const duelPanel = document.getElementById('duelPanel');
+const brPanel = document.getElementById('brPanel');
+modeDuelBtn.addEventListener('click', () => {
+  modeDuelBtn.classList.add('active'); modeBrBtn.classList.remove('active');
+  duelPanel.classList.add('show'); brPanel.classList.remove('show');
+});
+modeBrBtn.addEventListener('click', () => {
+  modeBrBtn.classList.add('active'); modeDuelBtn.classList.remove('active');
+  brPanel.classList.add('show'); duelPanel.classList.remove('show');
+});
+
+document.getElementById('duelStartBtn').addEventListener('click', startDuelMatch);
+document.getElementById('brStartBtn').addEventListener('click', startBrMatch);
+document.getElementById('backToLobbyBtn').addEventListener('click', () => location.reload());
+
+/* ---------- 1対1 (合言葉マッチング) ---------- */
+async function startDuelMatch() {
+  if (!myUid) return;
+  const passRaw = document.getElementById('duelPass').value;
+  if (!passRaw.trim()) { document.getElementById('duelStatus').textContent = "合言葉を入力してください"; return; }
+  const roomId = sanitizeKey(passRaw);
+  const roomPath = `duel/${roomId}`;
+  document.getElementById('duelStartBtn').disabled = true;
+  document.getElementById('duelStatus').textContent = "対戦相手を探しています...";
+
+  const roomRef = db.ref(roomPath);
+  const snap = await roomRef.once('value');
+  const data = snap.val();
+
+  if (!data || data.status === 'closed') {
+    // 部屋作成 (プレイヤー1)
+    await roomRef.set({
+      status: 'waiting',
+      createdAt: firebase.database.ServerValue.TIMESTAMP,
+      players: {
+        [myUid]: { name: myName, hp: 100, alive: true, x: -6, y: 1.6, z: 0, ry: 0, weapon: 'AR', joinedAt: firebase.database.ServerValue.TIMESTAMP }
+      }
+    });
+    listenForOpponentThenStart(roomRef, roomPath, 'duel');
+  } else {
+    const pcount = Object.keys(data.players || {}).length;
+    if (pcount >= 2 && !data.players[myUid]) {
+      document.getElementById('duelStatus').textContent = "その合言葉は使用中です。別の合言葉を試してください。";
+      document.getElementById('duelStartBtn').disabled = false;
+      return;
+    }
+    // プレイヤー2として参加
+    await roomRef.child(`players/${myUid}`).set({ name: myName, hp: 100, alive: true, x: 6, y: 1.6, z: 0, ry: Math.PI, weapon: 'AR', joinedAt: firebase.database.ServerValue.TIMESTAMP });
+    await roomRef.update({ status: 'active', matchStartTime: firebase.database.ServerValue.TIMESTAMP, aliveCount: 2 });
+    beginMatch(roomRef, roomPath, 'duel', new THREE.Vector3(6, 1.6, 0));
+  }
+}
+
+function listenForOpponentThenStart(roomRef, roomPath, mode) {
+  roomRef.on('value', snap => {
+    const data = snap.val();
+    if (!data) return;
+    const pcount = Object.keys(data.players || {}).length;
+    if (data.status === 'active' && pcount >= 2 && !started) {
+      roomRef.off('value');
+      beginMatch(roomRef, roomPath, mode, new THREE.Vector3(-6, 1.6, 0));
+    }
+  });
+}
+
+/* ---------- バトロワ (ランダムマッチ) ---------- */
+const BR_ROOM_PATH = 'battleroyale/current';
+async function startBrMatch() {
+  if (!myUid) return;
+  document.getElementById('brStartBtn').disabled = true;
+  document.getElementById('brStatus').textContent = "参加者を待っています...";
+  const roomRef = db.ref(BR_ROOM_PATH);
+
+  await roomRef.transaction(cur => {
+    if (!cur || cur.status === 'finished' || !cur.status) {
+      return {
         status: 'waiting',
-        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-        players: {
-          [uid]: { name: myName, x: 0, y: 0, angle: 0, lap: 1, finished: false, finishTime: null }
+        createdAt: firebase.database.ServerValue.TIMESTAMP,
+        players: { [myUid]: { name: myName, hp: 100, alive: true, x: 0, y: 1.6, z: 0, ry: 0, weapon: 'AR' } }
+      };
+    }
+    if (cur.status === 'waiting') {
+      cur.players = cur.players || {};
+      cur.players[myUid] = { name: myName, hp: 100, alive: true, x: 0, y: 1.6, z: 0, ry: 0, weapon: 'AR' };
+      return cur;
+    }
+    return cur; // active中は割り込まない(次のラウンド待ち)
+  });
+
+  roomRef.on('value', snap => {
+    const data = snap.val();
+    if (!data) return;
+    const pcount = Object.keys(data.players || {}).length;
+    if (data.status === 'waiting') {
+      document.getElementById('brStatus').textContent = `待機中... 参加人数: ${pcount}人`;
+      // 2人以上集まったら短いカウントダウン後に開始(部屋作成者が起点)
+      if (pcount >= 2 && !data.countdownStartedAt) {
+        roomRef.update({ countdownStartedAt: firebase.database.ServerValue.TIMESTAMP }).catch(()=>{});
+      }
+      if (data.countdownStartedAt) {
+        const elapsed = (Date.now() - data.countdownStartedAt) / 1000;
+        const remain = Math.max(0, 8 - elapsed);
+        document.getElementById('brStatus').textContent = `まもなく開始... ${Math.ceil(remain)}秒 (参加人数: ${pcount}人)`;
+        if (remain <= 0 && !started) {
+          roomRef.transaction(cur => {
+            if (cur && cur.status === 'waiting') {
+              cur.status = 'active';
+              cur.matchStartTime = firebase.database.ServerValue.TIMESTAMP;
+              cur.aliveCount = Object.keys(cur.players || {}).length;
+            }
+            return cur;
+          });
         }
-      });
-      await second.ref.update({ matchedRoom: roomRef.id });
-      const myRef = myQueueRef;
-      myQueueRef = null;
-      await myRef.delete().catch(()=>{});
-      joinRoom(roomRef.id, 1, true);
-    } catch(e){
-      setStatus("マッチング失敗: " + e.message);
-    }
-  }, err => setStatus("マッチング監視エラー: " + err.message));
-}
-
-document.getElementById('randomBtn').onclick = () => startMatching('random');
-document.getElementById('friendBtn').onclick = () => {
-  const kw = (document.getElementById('keywordInput').value || '').trim();
-  if (!kw){ alert("あいことばを入力してください"); return; }
-  startMatching('friend', kw);
-};
-document.getElementById('cancelMatchBtn').onclick = () => {
-  cleanupQueue();
-  stopPractice();
-  showScreen('start');
-};
-
-/* =====================================================================
-   練習モード（マッチング待ち中に1人で走れる）
-===================================================================== */
-let inPractice = false;
-let practiceAnimHandle = null;
-
-function startPractice(){
-  if (!uid) return;
-  inPractice = true;
-  showScreen('race');
-  resizeCanvas();
-  raceState = freshCarState(1);
-  raceState.startTime = Date.now();
-  document.getElementById('countdownOverlay').textContent = '';
-  document.getElementById('practiceBackBtn').style.display = 'block';
-  document.getElementById('opponentBox').innerHTML = '対戦相手<br>検索中…';
-  document.getElementById('timerText').textContent = '練習走行';
-
-  function loop(){
-    if (!inPractice) return;
-    updatePhysics();
-    render();
-    practiceAnimHandle = requestAnimationFrame(loop);
-  }
-  practiceAnimHandle = requestAnimationFrame(loop);
-}
-
-function stopPractice(){
-  inPractice = false;
-  if (practiceAnimHandle) cancelAnimationFrame(practiceAnimHandle);
-  practiceAnimHandle = null;
-  document.getElementById('practiceBackBtn').style.display = 'none';
-  raceState = null;
-}
-
-document.getElementById('practiceBtn').onclick = startPractice;
-document.getElementById('practiceBackBtn').onclick = () => {
-  stopPractice();
-  showScreen('match');
-};
-
-/* =====================================================================
-   ルーム合流〜レース進行
-===================================================================== */
-let opponentUid = null;
-let mySlot = 1; // 1 or 2（スタート位置決め用）
-let raceState = null; // このクライアントのローカル物理状態
-
-function joinRoom(roomId, slot, amIInitiator){
-  currentRoomId = roomId;
-  mySlot = slot;
-  const roomRef = db.collection('rooms').doc(roomId);
-
-  if (!amIInitiator || slot === 2){
-    // 2番手は自分のplayersエントリを追加する
-    roomRef.update({
-      ['players.' + uid]: { name: myName, x:0, y:0, angle:0, lap:1, finished:false, finishTime:null },
-      status: 'countdown',
-      countdownStart: firebase.firestore.FieldValue.serverTimestamp()
-    }).catch(()=>{});
-  }
-
-  roomUnsub = roomRef.onSnapshot(snap => {
-    const d = snap.data();
-    if (!d) return;
-    const uids = Object.keys(d.players || {});
-    if (uids.length === 2 && !opponentUid){
-      opponentUid = uids.find(u => u !== uid);
-    }
-    if (d.status === 'countdown' && d.countdownStart && !raceState){
-      beginRaceSequence(roomRef, d.countdownStart);
-    }
-    if (opponentUid && d.players && d.players[opponentUid]){
-      onOpponentUpdate(d.players[opponentUid]);
-    }
-    if (d.status === 'finished'){
-      // 何もしない（自分のfinish判定はローカルで行う）
-    }
-  }, err => setStatus("ルーム監視エラー: " + err.message));
-}
-
-/* ---------- トラック定義（スタジアム型） ---------- */
-const TRACK = {
-  L: 900,      // 直線部の長さ
-  R: 260,      // カーブ半径
-  width: 240,  // 走行帯の幅
-};
-TRACK.total = TRACK.L * 2 + Math.PI * TRACK.R * 2;
-
-function centerlinePoint(s){
-  s = ((s % TRACK.total) + TRACK.total) % TRACK.total;
-  const L = TRACK.L, R = TRACK.R;
-  if (s < L){
-    return { x: -L/2 + s, y: -R };
-  } else if (s < L + Math.PI*R){
-    const a = -Math.PI/2 + (s - L) / R;
-    return { x: L/2 + R*Math.cos(a), y: R*Math.sin(a) };
-  } else if (s < 2*L + Math.PI*R){
-    const s2 = s - (L + Math.PI*R);
-    return { x: L/2 - s2, y: R };
-  } else {
-    const s2 = s - (2*L + Math.PI*R);
-    const a = Math.PI/2 + s2 / R;
-    return { x: -L/2 + R*Math.cos(a), y: R*Math.sin(a) };
-  }
-}
-
-// s(進行度)推定：サンプリングで最近傍点を探す
-const S_SAMPLES = 240;
-const sampleCache = [];
-for (let i=0;i<S_SAMPLES;i++){
-  const s = TRACK.total * i / S_SAMPLES;
-  const p = centerlinePoint(s);
-  sampleCache.push({s, x:p.x, y:p.y});
-}
-function estimateS(x, y){
-  let bestI = 0, bestD = Infinity;
-  for (let i=0;i<S_SAMPLES;i++){
-    const dx = sampleCache[i].x - x, dy = sampleCache[i].y - y;
-    const d = dx*dx+dy*dy;
-    if (d < bestD){ bestD = d; bestI = i; }
-  }
-  // 前後を細かく再探索
-  const step = TRACK.total / S_SAMPLES;
-  let bestS = sampleCache[bestI].s, bestD2 = bestD;
-  for (let k=-5;k<=5;k++){
-    const s = sampleCache[bestI].s + step*k/10;
-    const p = centerlinePoint(s);
-    const dx = p.x-x, dy = p.y-y;
-    const d = dx*dx+dy*dy;
-    if (d < bestD2){ bestD2 = d; bestS = s; }
-  }
-  return { s: bestS, dist: Math.sqrt(bestD2) };
-}
-
-/* ---------- レースローカル状態 ---------- */
-function freshCarState(spawnSide){
-  const p0 = centerlinePoint(0);
-  const offset = spawnSide === 1 ? -55 : 55; // 横並びスタート
-  return {
-    x: p0.x, y: p0.y + offset,
-    angle: 0,          // 見た目の向き
-    moveAngle: 0,       // 実際の移動方向
-    speed: 0,
-    steering: 0,        // -1..1
-    accelOn: false,
-    brakeOn: false,
-    isDrifting: false,
-    driftTimer: 0,
-    driftDir: 0,
-    boostTimer: 0,
-    lap: 1,
-    hasPassedHalf: false,
-    sPrev: 0,
-    finished: false,
-    finishTime: null,
-    startTime: null,
-  };
-}
-
-let opponentDisplay = { x:0, y:0, angle:0, lap:1, finished:false, name:"対戦相手", finishTime:null };
-function onOpponentUpdate(d){
-  opponentDisplay.x = d.x; opponentDisplay.y = d.y; opponentDisplay.angle = d.angle;
-  opponentDisplay.lap = d.lap; opponentDisplay.finished = d.finished;
-  opponentDisplay.name = d.name || "対戦相手";
-  opponentDisplay.finishTime = d.finishTime;
-  document.getElementById('opponentBox').innerHTML =
-    (d.name || "対戦相手") + "<br>LAP " + Math.min(d.lap,3) + "/3" + (d.finished ? " 🏁" : "");
-}
-
-/* ---------- カウントダウン〜開始 ---------- */
-let countdownDone = false;
-function beginRaceSequence(roomRef, countdownStartTs){
-  stopPractice();
-  showScreen('race');
-  resizeCanvas();
-  raceState = freshCarState(mySlot);
-  countdownDone = false;
-  document.getElementById('opponentBox').innerHTML = opponentDisplay.name + "<br>LAP 1/3";
-  const overlay = document.getElementById('countdownOverlay');
-
-  // countdownStartはserverTimestamp。読み取り時に確定していない場合は現在時刻+3秒扱い
-  const startMs = countdownStartTs.toMillis ? countdownStartTs.toMillis() : Date.now();
-  const raceStartMs = startMs + 3000;
-
-  function tick(){
-    const now = Date.now();
-    const remain = raceStartMs - now;
-    if (remain > 0){
-      const n = Math.ceil(remain/1000);
-      overlay.textContent = n > 3 ? "" : String(n);
-      requestAnimationFrame(tick);
-    } else {
-      overlay.textContent = "GO!";
-      countdownDone = true;
-      raceState.startTime = Date.now();
-      setTimeout(()=>{ overlay.textContent=""; }, 700);
-      startGameLoop();
-    }
-  }
-  tick();
-}
-
-/* =====================================================================
-   入力（ハンドル / アクセル / ブレーキ）
-===================================================================== */
-const wheelWrap = document.getElementById('wheelWrap');
-const wheelInner = document.getElementById('wheelInner');
-let wheelDragging = false;
-let wheelAngleDeg = 0; // -90..90
-
-function wheelPointerMove(clientX, clientY){
-  const rect = wheelWrap.getBoundingClientRect();
-  const cx = rect.left + rect.width/2, cy = rect.top + rect.height/2;
-  let deg = Math.atan2(clientX - cx, -(clientY - cy)) * 180 / Math.PI;
-  deg = Math.max(-90, Math.min(90, deg));
-  wheelAngleDeg = deg;
-  wheelInner.style.transform = 'rotate(' + deg + 'deg)';
-  if (raceState) raceState.steering = deg / 90;
-}
-function wheelReset(){
-  wheelDragging = false;
-  wheelAngleDeg = 0;
-  wheelInner.style.transform = 'rotate(0deg)';
-  if (raceState) raceState.steering = 0;
-}
-wheelWrap.addEventListener('pointerdown', e => { wheelDragging = true; wheelWrap.setPointerCapture(e.pointerId); wheelPointerMove(e.clientX, e.clientY); });
-wheelWrap.addEventListener('pointermove', e => { if (wheelDragging) wheelPointerMove(e.clientX, e.clientY); });
-wheelWrap.addEventListener('pointerup', wheelReset);
-wheelWrap.addEventListener('pointercancel', wheelReset);
-
-const accelBtn = document.getElementById('accelBtn');
-const brakeBtn = document.getElementById('brakeBtn');
-function bindPedal(el, onFn, offFn){
-  el.addEventListener('pointerdown', e => { el.setPointerCapture(e.pointerId); onFn(); });
-  el.addEventListener('pointerup', offFn);
-  el.addEventListener('pointercancel', offFn);
-  el.addEventListener('pointerleave', () => { /* keep held while pointer captured */ });
-}
-bindPedal(accelBtn,
-  () => { accelBtn.classList.add('on'); if (raceState) raceState.accelOn = true; },
-  () => { accelBtn.classList.remove('on'); if (raceState) raceState.accelOn = false; }
-);
-bindPedal(brakeBtn,
-  () => { brakeBtn.classList.add('on'); if (raceState) raceState.brakeOn = true; },
-  () => { brakeBtn.classList.remove('on'); if (raceState) raceState.brakeOn = false; releaseDrift(); }
-);
-
-function releaseDrift(){
-  if (!raceState || !raceState.isDrifting) return;
-  const t = raceState.driftTimer;
-  raceState.isDrifting = false;
-  if (t > 50){
-    const boost = t > 78 ? MAX_SPEED*0.95 : MAX_SPEED*0.5;
-    raceState.speed = Math.min(raceState.speed + boost, MAX_SPEED*1.6);
-    raceState.boostTimer = t > 78 ? 55 : 35;
-  }
-  raceState.driftTimer = 0;
-}
-
-/* =====================================================================
-   物理・ゲームループ
-===================================================================== */
-const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
-function resizeCanvas(){
-  canvas.width = window.innerWidth * devicePixelRatio;
-  canvas.height = window.innerHeight * devicePixelRatio;
-  canvas.style.width = window.innerWidth + 'px';
-  canvas.style.height = window.innerHeight + 'px';
-}
-window.addEventListener('resize', resizeCanvas);
-
-const MAX_SPEED = 6.2;
-const ACCEL = 0.16;
-const BRAKE_DECEL = 0.26;
-const FRICTION = 0.985;
-const BASE_TURN = 0.052;
-const DRIFT_TURN_MULT = 1.55;
-const OFFTRACK_MULT = 0.5;
-
-let lastSyncTime = 0;
-let animHandle = null;
-
-function updatePhysics(){
-  const c = raceState;
-  if (!c || c.finished) return;
-
-  // オントラック判定
-  const { s, dist } = estimateS(c.x, c.y);
-  const onTrack = dist < TRACK.width/2;
-  const maxSpeedNow = (onTrack ? MAX_SPEED : MAX_SPEED*OFFTRACK_MULT) * (c.boostTimer>0 ? 1.5 : 1);
-
-  // 加減速
-  if (c.accelOn){
-    c.speed += ACCEL;
-  } else if (c.brakeOn){
-    if (c.speed > 0.4) c.speed -= BRAKE_DECEL;
-    else c.speed = Math.max(c.speed - 0.05, -2.2);
-  } else {
-    c.speed *= FRICTION;
-    if (Math.abs(c.speed) < 0.02) c.speed = 0;
-  }
-  c.speed = Math.max(-2.2, Math.min(c.speed, maxSpeedNow));
-  if (!onTrack) c.speed *= 0.965;
-
-  // ドリフト判定
-  const wantDrift = c.brakeOn && Math.abs(c.steering) > 0.28 && c.speed > 1.6;
-  if (wantDrift && !c.isDrifting){
-    c.isDrifting = true;
-    c.driftDir = c.steering > 0 ? 1 : -1;
-    c.driftTimer = 0;
-  }
-  if (c.isDrifting && !c.brakeOn){
-    releaseDrift();
-  }
-  if (c.isDrifting){
-    c.driftTimer = Math.min(c.driftTimer + 1, 100);
-  }
-
-  // 旋回
-  const speedFactor = 0.35 + 0.65*Math.min(1, Math.abs(c.speed)/2.5);
-  const turnMult = c.isDrifting ? DRIFT_TURN_MULT : 1;
-  const dir = c.speed >= 0 ? 1 : -1;
-  c.angle += BASE_TURN * c.steering * speedFactor * turnMult * dir;
-
-  if (c.isDrifting){
-    // 見た目角度が先行し、移動方向はゆっくり追従（スライド演出）
-    let diff = c.angle - c.moveAngle;
-    diff = Math.atan2(Math.sin(diff), Math.cos(diff));
-    c.moveAngle += diff * 0.07;
-  } else {
-    c.moveAngle = c.angle;
-  }
-
-  c.x += Math.cos(c.moveAngle) * c.speed;
-  c.y += Math.sin(c.moveAngle) * c.speed;
-
-  if (c.boostTimer > 0) c.boostTimer--;
-
-  // 周回判定
-  if (c.hasPassedHalf === false){
-    const half = TRACK.total/2;
-    if (s > half*0.4 && s < half*1.6 && Math.abs(s-half) < TRACK.total*0.15){
-      c.hasPassedHalf = true;
-    }
-  }
-  if (c.sPrev > TRACK.total*0.85 && s < TRACK.total*0.15 && c.hasPassedHalf){
-    c.lap += 1;
-    c.hasPassedHalf = false;
-    if (c.lap > 3){
-      if (inPractice){
-        c.lap = 1; // 練習中は無限に周回できる
-      } else {
-        c.finished = true;
-        c.finishTime = (Date.now() - c.startTime)/1000;
-        onFinish();
       }
+    } else if (data.status === 'active' && !started) {
+      roomRef.off('value');
+      const spawn = spawnRandomPos(zoneInitialRadius);
+      beginMatch(roomRef, BR_ROOM_PATH, 'br', spawn);
     }
-  }
-  c.sPrev = s;
+  });
 }
 
-function onFinish(){
-  if (!currentRoomId) return;
-  db.collection('rooms').doc(currentRoomId).update({
-    ['players.' + uid + '.finished']: true,
-    ['players.' + uid + '.finishTime']: raceState.finishTime,
-    ['players.' + uid + '.lap']: 4
-  }).catch(()=>{});
-  checkRaceEnd();
-}
+/* =========================================================================
+   マッチ開始 / ゲームループ
+   ========================================================================= */
+function beginMatch(roomRef, roomPath, mode, spawnPos) {
+  currentRoomRef = roomRef;
+  currentRoomPath = roomPath;
+  currentMode = mode;
+  started = true;
+  myHp = 100; myAlive = true; setWeapon('AR');
 
-function checkRaceEnd(){
-  if (!raceState || !raceState.finished) return;
-  // 相手がすでにゴールしていれば即結果、まだなら少し待つ
-  if (opponentDisplay.finished){
-    showResult();
+  document.getElementById('lobby').classList.add('hidden');
+  document.getElementById('hud').classList.add('show');
+
+  tryLockLandscape();
+  if (isTouchDevice()) setupTouchControls();
+
+  if (!scene) initThree();
+
+  playerPos.copy(spawnPos);
+  camera.position.copy(playerPos);
+
+  // ゾーン情報取得
+  roomRef.once('value').then(snap => {
+    const d = snap.val();
+    matchStartTime = d.matchStartTime || Date.now();
+  });
+  if (mode === 'br') {
+    zoneRing.visible = true;
+    document.getElementById('topInfo').style.display = 'block';
   } else {
-    document.getElementById('countdownOverlay').textContent = '';
-    const waitCheck = setInterval(() => {
-      if (opponentDisplay.finished){
-        clearInterval(waitCheck);
-        showResult();
-      }
-    }, 400);
-    // 60秒待っても来なければ強制終了
-    setTimeout(() => { clearInterval(waitCheck); if(screens.race.classList.contains('active')) showResult(); }, 60000);
+    zoneRing.visible = false;
+  }
+
+  // 自分の状態をDBへ反映
+  updateHealthUI();
+
+  // 相手/他プレイヤーの購読
+  roomRef.child('players').on('child_added', snap => {
+    const uid = snap.key;
+    if (uid === myUid) return;
+    addRemotePlayer(uid, snap.val());
+  });
+  roomRef.child('players').on('child_changed', snap => {
+    const uid = snap.key;
+    if (uid === myUid) { handleMyRemoteState(snap.val()); return; }
+    updateRemotePlayer(uid, snap.val());
+  });
+  roomRef.child('players').on('child_removed', snap => {
+    removeRemotePlayer(snap.key);
+  });
+  roomRef.child('aliveCount').on('value', snap => {
+    aliveCountVal = snap.val() || aliveCountVal;
+    document.getElementById('aliveCount').textContent = `残り生存: ${aliveCountVal}人`;
+  });
+
+  window.addEventListener('beforeunload', cleanupOnExit);
+
+  animate();
+}
+
+function handleMyRemoteState(data) {
+  if (!data) return;
+  if (data.hp !== undefined && data.hp !== myHp) {
+    myHp = data.hp;
+    updateHealthUI();
+    if (myHp <= 0 && myAlive) onMyDeath();
   }
 }
 
-function showResult(){
-  if (roomUnsub){ roomUnsub(); roomUnsub = null; }
-  showScreen('result');
-  const myTime = raceState.finishTime;
-  const oppTime = opponentDisplay.finishTime;
-  const rowMe = document.getElementById('rowMe');
-  const rowOpp = document.getElementById('rowOpp');
-  rowMe.textContent = myName + "（あなた）: " + fmtTime(myTime);
-  rowOpp.textContent = opponentDisplay.name + ": " + (oppTime != null ? fmtTime(oppTime) : "リタイア");
+function addRemotePlayer(uid, data) {
+  const mesh = makeCharacterMesh(uidColor(uid));
+  mesh.position.set(data.x || 0, 0, data.z || 0);
+  mesh.rotation.y = data.ry || 0;
+  mesh.visible = data.alive !== false;
+  scene.add(mesh);
+  players[uid] = { mesh, data, lastUpdate: performance.now() };
+}
+function updateRemotePlayer(uid, data) {
+  const p = players[uid];
+  if (!p) { addRemotePlayer(uid, data); return; }
+  p.targetPos = new THREE.Vector3(data.x || 0, 0, data.z || 0);
+  p.targetRy = data.ry || 0;
+  p.mesh.visible = data.alive !== false;
+  p.data = data;
+}
+function removeRemotePlayer(uid) {
+  const p = players[uid];
+  if (p) { scene.remove(p.mesh); delete players[uid]; }
+}
 
-  const title = document.getElementById('resultTitle');
-  if (oppTime == null || myTime < oppTime){
-    title.textContent = "🏆 YOU WIN!";
-    title.className = "result-title win";
-  } else {
-    title.textContent = "YOU LOSE...";
-    title.className = "result-title lose";
+function updateHealthUI() {
+  document.getElementById('healthFill').style.width = Math.max(0, myHp) + '%';
+  document.getElementById('healthTxt').textContent = 'HP ' + Math.max(0, Math.round(myHp));
+}
+
+function onMyDeath() {
+  myAlive = false;
+  const roomRef = currentRoomRef;
+  roomRef.child(`players/${myUid}/alive`).set(false);
+
+  // 順位を決定(生存者数のトランザクション)
+  roomRef.child('aliveCount').transaction(cur => {
+    const c = (cur || aliveCountVal);
+    return Math.max(0, c - 1);
+  }).then(res => {
+    const rank = res.committed ? (res.snapshot.val() + 1) : aliveCountVal;
+    showResult(false, rank);
+  });
+
+  exitPointerLock();
+}
+
+function showResult(isWinner, rank) {
+  const el = document.getElementById('resultScreen');
+  document.getElementById('resultTitle').textContent = isWinner ? 'VICTORY' : 'DEFEATED';
+  document.getElementById('resultRank').textContent = '#' + rank;
+  document.getElementById('resultSub').textContent = currentMode === 'br' ? 'バトルロイヤル結果' : '1対1 結果';
+  el.classList.add('show');
+}
+
+function exitPointerLock() {
+  if (document.pointerLockElement) document.exitPointerLock();
+}
+
+function cleanupOnExit() {
+  if (currentRoomRef && myUid) {
+    currentRoomRef.child(`players/${myUid}`).remove();
   }
 }
 
-function fmtTime(t){
-  if (t == null) return "--:--.-";
-  const m = Math.floor(t/60);
-  const s = (t%60).toFixed(1).padStart(4,'0');
-  return String(m).padStart(2,'0') + ":" + s;
+/* ---------- 射撃 ---------- */
+const raycaster = new THREE.Raycaster();
+function tryFire(now) {
+  if (!myAlive) return;
+  const w = WEAPONS[myWeapon];
+  if (now - lastShot < w.rate) return;
+  if (!w.auto && wantFire === lastFireHeld) { /* semi-autoは立ち上がりのみ処理(下部で管理) */ }
+  lastShot = now;
+
+  const dir = new THREE.Vector3();
+  camera.getWorldDirection(dir);
+  dir.x += (Math.random() - 0.5) * w.spread;
+  dir.y += (Math.random() - 0.5) * w.spread;
+  dir.z += (Math.random() - 0.5) * w.spread;
+  dir.normalize();
+
+  raycaster.set(camera.position, dir);
+  raycaster.far = w.reach;
+  const targets = Object.values(players).map(p => p.mesh.userData.hitBox).filter(Boolean);
+  const hits = raycaster.intersectObjects(targets, false);
+  if (hits.length > 0) {
+    const hitMesh = hits[0].object;
+    const uid = Object.keys(players).find(k => players[k].mesh.userData.hitBox === hitMesh);
+    if (uid) applyDamageTo(uid, w.dmg, hits[0].distance, w.reach);
+  }
+}
+let lastFireHeld = false;
+function applyDamageTo(uid, dmg, dist, reach) {
+  const falloff = 1 - Math.min(0.5, (dist / reach) * 0.5);
+  const finalDmg = Math.round(dmg * falloff);
+  currentRoomRef.child(`players/${uid}/hp`).transaction(cur => {
+    const hp = (cur === null || cur === undefined) ? 100 : cur;
+    return Math.max(0, hp - finalDmg);
+  });
+  pushKillfeed(`${myName} が ${finalDmg} ダメージ`);
+}
+function pushKillfeed(msg) {
+  const el = document.createElement('div');
+  el.className = 'killmsg';
+  el.textContent = msg;
+  const kf = document.getElementById('killfeed');
+  kf.appendChild(el);
+  setTimeout(() => el.remove(), 3000);
 }
 
-/* ---------- 描画 ---------- */
-function drawTrack(camX, camY){
-  const w = canvas.width, h = canvas.height;
-  // 床(オフトラック)
-  ctx.fillStyle = "#cdbd8e";
-  ctx.fillRect(0,0,w,h);
-  ctx.save();
-  ctx.translate(w/2 - camX*devicePixelRatio, h/2 - camY*devicePixelRatio);
-  ctx.scale(devicePixelRatio, devicePixelRatio);
+/* ---------- 移動 & 物理 ---------- */
+const GRAVITY = -22, JUMP_SPEED = 8.4, MOVE_SPEED = 6.2;
+function updateMovement(dt) {
+  if (!myAlive) return;
+  const forward = new THREE.Vector3(Math.sin(yaw), 0, Math.cos(yaw)).multiplyScalar(-1);
+  const right = new THREE.Vector3(Math.cos(yaw), 0, -Math.sin(yaw));
 
-  // 走行帯（センターラインに沿って太い線でなぞる）
-  ctx.lineWidth = TRACK.width;
-  ctx.lineJoin = 'round'; ctx.lineCap = 'round';
-  ctx.strokeStyle = "#eef1f8";
-  ctx.beginPath();
-  for (let i=0;i<=S_SAMPLES;i++){
-    const p = sampleCache[i % S_SAMPLES];
-    if (i===0) ctx.moveTo(p.x,p.y); else ctx.lineTo(p.x,p.y);
+  let mx = 0, mz = 0;
+  if (keys['KeyW']) mz -= 1;
+  if (keys['KeyS']) mz += 1;
+  if (keys['KeyA']) mx -= 1;
+  if (keys['KeyD']) mx += 1;
+  mx += inputMove.x;
+  mz += inputMove.y;
+
+  const move = new THREE.Vector3();
+  move.addScaledVector(forward, -mz);
+  move.addScaledVector(right, mx);
+  if (move.lengthSq() > 1) move.normalize();
+
+  playerVel.x = move.x * MOVE_SPEED;
+  playerVel.z = move.z * MOVE_SPEED;
+
+  const jumpPressed = keys['Space'] || wantJump;
+  if (jumpPressed && onGround) {
+    playerVel.y = JUMP_SPEED;
+    onGround = false;
   }
-  ctx.closePath();
-  ctx.stroke();
+  playerVel.y += GRAVITY * dt;
 
-  // 走行帯の縁取り（水色ライン、雑巾で拭いた跡っぽい光沢）
-  ctx.lineWidth = TRACK.width - 14;
-  ctx.strokeStyle = "#dfe8fb";
-  ctx.stroke();
+  playerPos.x += playerVel.x * dt;
+  playerPos.y += playerVel.y * dt;
+  playerPos.z += playerVel.z * dt;
 
-  // センターの破線
-  ctx.lineWidth = 4;
-  ctx.setLineDash([18,16]);
-  ctx.strokeStyle = "#b9c4de";
-  ctx.stroke();
-  ctx.setLineDash([]);
+  if (playerPos.y <= 1.6) { playerPos.y = 1.6; playerVel.y = 0; onGround = true; }
 
-  // スタート/フィニッシュライン（s=0地点、直線区間の始点付近に縦線）
-  const p0 = centerlinePoint(0);
-  ctx.save();
-  ctx.translate(p0.x, p0.y);
-  const tile = 16;
-  for (let i=-TRACK.width/2; i<TRACK.width/2; i+=tile){
-    ctx.fillStyle = (Math.floor(i/tile)%2===0) ? "#222" : "#fff";
-    ctx.fillRect(-6, i, 12, tile);
-  }
-  ctx.restore();
-
-  ctx.restore();
+  camera.position.copy(playerPos);
+  camera.rotation.order = 'YXZ';
+  camera.rotation.y = yaw;
+  camera.rotation.x = pitch;
 }
 
-function drawCar(worldX, worldY, angle, camX, camY, colorA, colorB, drifting){
-  const w = canvas.width, h = canvas.height;
-  ctx.save();
-  ctx.translate(w/2 - camX*devicePixelRatio, h/2 - camY*devicePixelRatio);
-  ctx.scale(devicePixelRatio, devicePixelRatio);
-  ctx.translate(worldX, worldY);
-  ctx.rotate(angle);
+/* ---------- ゾーン (バトロワ) ---------- */
+function updateZone() {
+  if (currentMode !== 'br' || !matchStartTime) return;
+  const elapsed = (Date.now() - matchStartTime) / 1000;
+  const t = Math.min(1, elapsed / zoneShrinkDuration);
+  const radius = zoneInitialRadius + (zoneFinalRadius - zoneInitialRadius) * t;
+  zoneRing.geometry.dispose();
+  zoneRing.geometry = new THREE.RingGeometry(Math.max(0.2, radius - 0.4), Math.max(0.5, radius), 64);
 
-  // 雑巾ボディ（チェック柄の布）
-  const cw = 34, ch = 20;
-  ctx.fillStyle = colorA;
-  ctx.beginPath();
-  ctx.roundRect ? ctx.roundRect(-cw/2, -ch/2, cw, ch, 6) : ctx.rect(-cw/2,-ch/2,cw,ch);
-  ctx.fill();
-  ctx.fillStyle = colorB;
-  for (let i=0;i<4;i++){
-    for (let j=0;j<2;j++){
-      if ((i+j)%2===0) ctx.fillRect(-cw/2 + i*(cw/4), -ch/2 + j*(ch/2), cw/4, ch/2);
+  const remain = Math.max(0, zoneShrinkDuration - elapsed);
+  document.getElementById('zoneTimer').textContent = `安全地帯 半径${radius.toFixed(0)}m / 収縮まで${Math.ceil(remain)}秒`;
+
+  if (myAlive) {
+    const distFromCenter = Math.hypot(playerPos.x, playerPos.z);
+    if (distFromCenter > radius) {
+      myHp -= 8 * (1 / 60);
+      if (myHp <= 0) { myHp = 0; }
+      updateHealthUI();
+      currentRoomRef.child(`players/${myUid}/hp`).set(Math.max(0, Math.round(myHp)));
+      if (myHp <= 0 && myAlive) onMyDeath();
     }
   }
-  // ふちのギザギザ（雑巾感）
-  ctx.strokeStyle = "rgba(0,0,0,0.25)";
-  ctx.lineWidth = 1.5;
-  ctx.strokeRect(-cw/2,-ch/2,cw,ch);
+}
 
-  // 進行方向の小さい矢印
-  ctx.fillStyle = "rgba(0,0,0,0.4)";
-  ctx.beginPath();
-  ctx.moveTo(cw/2, 0); ctx.lineTo(cw/2-8,-6); ctx.lineTo(cw/2-8,6);
-  ctx.closePath(); ctx.fill();
+/* ---------- ネットワーク送信(スロットル) ---------- */
+let lastNetSend = 0;
+function sendMyState(now) {
+  if (!myAlive || !currentRoomRef) return;
+  if (now - lastNetSend < 90) return;
+  lastNetSend = now;
+  currentRoomRef.child(`players/${myUid}`).update({
+    x: playerPos.x, y: playerPos.y, z: playerPos.z, ry: yaw, weapon: myWeapon
+  });
+}
 
-  ctx.restore();
-
-  // ドリフト中の煙エフェクト（簡易）
-  if (drifting){
-    ctx.save();
-    ctx.translate(w/2 - camX*devicePixelRatio, h/2 - camY*devicePixelRatio);
-    ctx.scale(devicePixelRatio, devicePixelRatio);
-    ctx.globalAlpha = 0.35;
-    ctx.fillStyle = "#fff";
-    ctx.beginPath();
-    ctx.arc(worldX - Math.cos(angle)*20, worldY - Math.sin(angle)*20, 8, 0, Math.PI*2);
-    ctx.fill();
-    ctx.restore();
+/* ---------- リモートプレイヤー補間 ---------- */
+function interpolateRemotePlayers(dt) {
+  for (const uid in players) {
+    const p = players[uid];
+    if (!p.targetPos) continue;
+    p.mesh.position.lerp(p.targetPos, Math.min(1, dt * 8));
+    let dy = p.targetRy - p.mesh.rotation.y;
+    dy = ((dy + Math.PI) % (Math.PI * 2)) - Math.PI;
+    p.mesh.rotation.y += dy * Math.min(1, dt * 8);
   }
 }
 
-function render(){
-  if (!raceState) return;
-  drawTrack(raceState.x, raceState.y);
-  if (!inPractice){
-    drawCar(opponentDisplay.x, opponentDisplay.y, opponentDisplay.angle, raceState.x, raceState.y, "#7ec8ff", "#4a9fe0", false);
+/* ---------- 全滅判定(勝利) ---------- */
+function checkWinCondition() {
+  if (!started || !myAlive) return;
+  if (currentMode === 'br' && aliveCountVal <= 1) {
+    showResult(true, 1);
+    currentRoomRef.update({ status: 'finished' });
+    started = false;
   }
-  drawCar(raceState.x, raceState.y, raceState.angle, raceState.x, raceState.y, "#ffd47e", "#f0a83a", raceState.isDrifting);
-
-  document.getElementById('lapText').textContent = Math.min(raceState.lap,3) + "/3";
-  if (raceState.startTime){
-    document.getElementById('timerText').textContent =
-      inPractice ? "練習走行" : fmtTime((Date.now()-raceState.startTime)/1000);
-  }
-  brakeBtn.classList.toggle('drift-glow', raceState.isDrifting);
-}
-
-function startGameLoop(){
-  function loop(){
-    updatePhysics();
-    render();
-    syncToFirestore();
-    if (!raceState.finished) animHandle = requestAnimationFrame(loop);
-  }
-  animHandle = requestAnimationFrame(loop);
-}
-
-function syncToFirestore(){
-  if (!currentRoomId || !raceState) return;
-  const now = Date.now();
-  if (now - lastSyncTime < 90) return;
-  lastSyncTime = now;
-  db.collection('rooms').doc(currentRoomId).update({
-    ['players.' + uid]: {
-      name: myName, x: raceState.x, y: raceState.y, angle: raceState.angle,
-      lap: raceState.lap, finished: raceState.finished, finishTime: raceState.finishTime
+  if (currentMode === 'duel') {
+    const others = Object.values(players);
+    if (others.length > 0 && others.every(p => p.data && p.data.alive === false)) {
+      showResult(true, 1);
+      currentRoomRef.update({ status: 'closed' });
+      started = false;
     }
-  }).catch(()=>{});
-}
-
-/* =====================================================================
-   結果画面 → タイトルへ
-===================================================================== */
-document.getElementById('backBtn').onclick = () => {
-  cleanupRace();
-  showScreen('start');
-};
-
-function cleanupRace(){
-  if (animHandle) cancelAnimationFrame(animHandle);
-  if (roomUnsub){ roomUnsub(); roomUnsub = null; }
-  if (currentRoomId){
-    db.collection('rooms').doc(currentRoomId).delete().catch(()=>{});
   }
-  currentRoomId = null; opponentUid = null; raceState = null;
-  opponentDisplay = { x:0,y:0,angle:0,lap:1,finished:false,name:"対戦相手",finishTime:null };
-  countdownDone = false;
 }
 
-resizeCanvas();
+/* ---------- メインループ ---------- */
+function animate() {
+  if (!started && document.getElementById('resultScreen').classList.contains('show')) return;
+  requestAnimationFrame(animate);
+  const dt = Math.min(0.05, clock.getDelta());
+  const now = performance.now();
+
+  pollGamepad();
+  updateMovement(dt);
+  updateZone();
+  interpolateRemotePlayers(dt);
+  sendMyState(now);
+  checkWinCondition();
+
+  const w = WEAPONS[myWeapon];
+  if (wantFire) {
+    if (w.auto) {
+      tryFire(now);
+    } else if (!lastFireHeld) {
+      tryFire(now);
+    }
+  }
+  lastFireHeld = wantFire;
+
+  renderer.render(scene, camera);
+}
+
+/* ---------- 離脱時クリーンアップ ---------- */
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden && currentRoomRef && myUid && !myAlive === false) {
+    // タブ非表示でもプレイ継続(離脱削除はbeforeunloadのみ)
+  }
+});
 </script>
 </body>
 </html>
