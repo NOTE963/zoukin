@@ -2,511 +2,797 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
-<title>鳴らし鬼 — 嘘つき探しゲーム</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>しりとりチェーン | オンライン対戦</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700;9..144,900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg: #171726;
-    --panel: #20213a;
-    --panel-2: #262848;
-    --line: #363867;
-    --ink: #f1eee6;
-    --ink-dim: #a19fc4;
-    --bell: #e8a33d;
-    --bell-dim: #6b5427;
-    --liar: #d1495b;
-    --honest: #4fb3a9;
-    --shadow: 0 20px 50px rgba(0,0,0,.45);
+    --paper:#F2EEE3;
+    --paper-raised:#FAF8F1;
+    --ink:#26344B;
+    --ink-soft:#5B6B82;
+    --indigo:#2F4A7A;
+    --indigo-deep:#1C2E4A;
+    --gold:#C99A3D;
+    --vermillion:#C1432E;
+    --line:#D8D0BC;
+    --radius:18px;
   }
-  *{ box-sizing: border-box; }
-  html,body{ height:100%; }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
   body{
-    margin:0;
+    min-height:100vh;
     background:
-      radial-gradient(circle at 20% -10%, #262a52 0%, transparent 55%),
-      radial-gradient(circle at 100% 0%, #2a1f3d 0%, transparent 45%),
-      var(--bg);
-    color: var(--ink);
-    font-family: 'Inter', system-ui, sans-serif;
-    min-height:100%;
+      radial-gradient(circle at 15% 8%, rgba(47,74,122,0.06), transparent 40%),
+      radial-gradient(circle at 85% 92%, rgba(201,154,61,0.08), transparent 45%),
+      var(--paper);
+    font-family:"Zen Kaku Gothic New","Noto Sans JP",sans-serif;
+    color:var(--ink);
     display:flex;
-    align-items:center;
     justify-content:center;
-    padding: 24px 16px;
+    padding:28px 16px 60px;
   }
-  #app{ width:100%; max-width: 440px; }
+  .stage{width:100%;max-width:460px;}
+  header.app-head{
+    display:flex;
+    align-items:baseline;
+    gap:10px;
+    margin-bottom:22px;
+    padding-left:2px;
+  }
+  header.app-head h1{
+    font-family:"Zen Maru Gothic",sans-serif;
+    font-weight:900;
+    font-size:26px;
+    letter-spacing:.02em;
+    margin:0;
+    color:var(--indigo-deep);
+  }
+  header.app-head span.tag{
+    font-size:12px;
+    color:var(--ink-soft);
+    border-left:2px solid var(--line);
+    padding-left:10px;
+  }
   .card{
-    background: var(--panel);
-    border: 1px solid var(--line);
-    border-radius: 20px;
-    padding: 28px 24px 24px;
-    box-shadow: var(--shadow);
-    animation: rise .35s ease;
+    background:var(--paper-raised);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:26px 22px;
+    box-shadow:0 1px 0 rgba(38,52,75,0.04);
   }
-  @keyframes rise{ from{ opacity:0; transform: translateY(10px);} to{ opacity:1; transform:none; } }
-  h1.title{
-    font-family:'Fraunces', serif;
-    font-weight:700;
-    font-size: 30px;
-    line-height:1.15;
-    margin: 0 0 6px;
-    letter-spacing: -.01em;
+  .screen{display:none;}
+  .screen.active{display:block;animation:rise .35s ease;}
+  @keyframes rise{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+
+  label{
+    display:block;
+    font-size:13px;
+    color:var(--ink-soft);
+    margin:0 0 6px 2px;
   }
-  .lede{ color: var(--ink-dim); font-size: 14px; margin: 0 0 22px; line-height:1.6; }
-  label{ display:block; font-size: 13px; color: var(--ink-dim); margin: 16px 0 6px; }
   input[type=text]{
-    width:100%; padding: 13px 14px; border-radius: 12px;
-    border: 1px solid var(--line); background: var(--panel-2); color: var(--ink);
-    font-size: 16px; font-family:'Inter',sans-serif; outline:none;
+    width:100%;
+    font-family:inherit;
+    font-size:17px;
+    padding:12px 14px;
+    border:1.5px solid var(--line);
+    border-radius:12px;
+    background:#fff;
+    color:var(--ink);
+    outline:none;
+    transition:border-color .15s;
   }
-  input[type=text]:focus{ border-color: var(--bell); }
-  .btn{
-    display:inline-flex; align-items:center; justify-content:center; gap:8px;
-    width:100%; padding: 14px 16px; border-radius: 12px; border: none;
-    font-size: 15px; font-weight:600; cursor:pointer; margin-top: 18px;
-    font-family:'Inter',sans-serif; transition: transform .12s ease, filter .12s ease;
+  input[type=text]:focus{border-color:var(--indigo);}
+  .field{margin-bottom:16px;}
+
+  button{
+    font-family:"Zen Maru Gothic",sans-serif;
+    font-weight:700;
+    font-size:15px;
+    border:none;
+    border-radius:12px;
+    padding:13px 18px;
+    cursor:pointer;
+    transition:transform .08s, background .15s;
   }
-  .btn:active{ transform: scale(.97); }
-  .btn-primary{ background: var(--bell); color: #1a1406; }
-  .btn-primary:hover{ filter: brightness(1.06); }
-  .btn-ghost{ background: transparent; color: var(--ink-dim); border: 1px solid var(--line); }
-  .btn-ghost:hover{ color: var(--ink); border-color:#4a4d82; }
-  .btn:disabled{ opacity:.45; cursor:not-allowed; }
-  .room-tag{
-    display:flex; align-items:center; justify-content:space-between;
-    background: var(--panel-2); border:1px solid var(--line); border-radius: 12px;
-    padding: 10px 14px; margin-bottom: 18px;
+  button:active{transform:scale(.98);}
+  button.primary{background:var(--indigo);color:#fff;width:100%;}
+  button.primary:hover{background:var(--indigo-deep);}
+  button.primary:disabled{background:#B9C0CC;cursor:not-allowed;}
+  button.ghost{background:transparent;color:var(--indigo);border:1.5px solid var(--indigo);width:100%;}
+  button.small{padding:8px 12px;font-size:13px;border-radius:9px;}
+
+  .divider{
+    display:flex;align-items:center;gap:10px;
+    margin:22px 0;color:var(--ink-soft);font-size:12px;
   }
-  .room-tag .code{ font-family:'Fraunces', serif; font-size: 19px; font-weight:700; letter-spacing:.03em; }
-  .room-tag button{
-    background:none; border:none; color: var(--ink-dim); font-size:12px; cursor:pointer;
-    padding: 4px 8px; border-radius:8px;
+  .divider::before,.divider::after{content:"";flex:1;height:1px;background:var(--line);}
+
+  .room-code{
+    font-family:"Zen Maru Gothic",sans-serif;
+    font-weight:900;
+    font-size:38px;
+    letter-spacing:.12em;
+    color:var(--indigo-deep);
+    text-align:center;
+    margin:4px 0 2px;
   }
-  .room-tag button:hover{ color: var(--ink); background:#31335a; }
-  .players{ list-style:none; margin: 0 0 6px; padding:0; display:flex; flex-direction:column; gap:8px; }
-  .players li{
-    display:flex; align-items:center; justify-content:space-between;
-    background: var(--panel-2); border:1px solid var(--line); border-radius: 12px;
-    padding: 11px 14px; font-size: 14px;
+  .room-code-label{text-align:center;font-size:12px;color:var(--ink-soft);margin-bottom:18px;}
+
+  .player-list{list-style:none;margin:0 0 20px;padding:0;display:flex;flex-direction:column;gap:8px;}
+  .player-list li{
+    display:flex;justify-content:space-between;align-items:center;
+    background:var(--paper);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:10px 14px;
+    font-size:14px;
   }
-  .players li .tag{ font-size:11px; color: var(--bell); border:1px solid var(--bell-dim); padding:2px 7px; border-radius:999px; }
-  .players li.me{ border-color:#4a4d82; }
-  .section-label{ font-size:12px; color: var(--ink-dim); letter-spacing:.02em; margin: 20px 0 8px; }
-  .role-box{ text-align:center; padding: 22px 10px 8px; }
-  .role-box .role-icon{ font-size: 44px; line-height:1; margin-bottom: 10px; }
-  .role-box h2{ font-family:'Fraunces',serif; font-size: 24px; margin: 0 0 8px; }
-  .role-box p{ color: var(--ink-dim); font-size: 13.5px; line-height:1.6; margin:0; }
-  .role-liar h2{ color: var(--liar); }
-  .role-honest h2{ color: var(--honest); }
-  .bell-wrap{ display:flex; flex-direction:column; align-items:center; margin: 26px 0 6px; }
-  .bell-btn{
-    width: 148px; height:148px; border-radius: 50%; border: none; cursor:pointer;
-    background: radial-gradient(circle at 35% 30%, #f4c876, var(--bell) 70%);
-    box-shadow: 0 12px 0 var(--bell-dim), 0 18px 30px rgba(0,0,0,.5);
-    font-size: 54px; color:#241a05; transition: transform .06s ease, box-shadow .06s ease;
+  .player-list li.turn{border-color:var(--gold);background:#FBF3E1;}
+  .player-list li.dead{opacity:.4;text-decoration:line-through;}
+  .badge{
+    font-size:11px;
+    padding:2px 8px;
+    border-radius:999px;
+    background:var(--indigo);
+    color:#fff;
   }
-  .bell-btn:active{ transform: translateY(8px); box-shadow: 0 4px 0 var(--bell-dim), 0 8px 16px rgba(0,0,0,.5); }
-  .bell-btn.ring{ animation: shake .4s ease; }
-  @keyframes shake{ 10%,90%{ transform: translateX(-2px);} 20%,80%{ transform: translateX(4px);} 30%,50%,70%{ transform: translateX(-8px);} 40%,60%{ transform: translateX(8px);} }
-  .bell-hint{ font-size: 12px; color: var(--ink-dim); margin-top: 14px; text-align:center; }
-  .flash{
-    text-align:center; font-size: 13px; color: var(--bell); min-height: 18px; margin-top: 10px;
+  .badge.host{background:var(--gold);}
+  .badge.turn{background:var(--vermillion);}
+
+  .chain-wrap{
+    display:flex;flex-wrap:wrap;gap:6px 4px;
+    align-items:center;
+    max-height:240px;
+    overflow-y:auto;
+    padding:14px;
+    background:var(--paper);
+    border:1px solid var(--line);
+    border-radius:12px;
+    margin-bottom:16px;
   }
-  .vote-list{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:8px; }
-  .vote-list li{
-    border:1px solid var(--line); background: var(--panel-2); border-radius: 12px;
-    padding: 12px 14px; font-size:14px; cursor:pointer; display:flex; justify-content:space-between; align-items:center;
+  .chain-empty{color:var(--ink-soft);font-size:13px;padding:6px 2px;}
+  .word-pill{
+    font-family:"Zen Maru Gothic",sans-serif;
+    font-weight:700;
+    font-size:14px;
+    background:#fff;
+    border:1.5px solid var(--indigo);
+    color:var(--indigo-deep);
+    padding:6px 12px;
+    border-radius:999px;
+    white-space:nowrap;
   }
-  .vote-list li.picked{ border-color: var(--bell); background: #302711; }
-  .vote-progress{ font-size:12px; color: var(--ink-dim); text-align:center; margin-top: 14px; }
-  .reveal{ text-align:center; padding: 10px 0 4px; }
-  .reveal .who{ font-family:'Fraunces',serif; font-size: 26px; color: var(--liar); margin: 6px 0 4px; }
-  .tally{ list-style:none; margin: 18px 0 0; padding:0; display:flex; flex-direction:column; gap:8px; }
-  .tally li{ display:flex; align-items:center; gap:10px; font-size: 13px; }
-  .tally .bar-track{ flex:1; background:#141428; border-radius:999px; height:8px; overflow:hidden; }
-  .tally .bar-fill{ height:100%; background: var(--bell); border-radius:999px; }
-  .tally .count{ width: 22px; text-align:right; color: var(--ink-dim); }
-  .err{ color: var(--liar); font-size: 13px; margin-top: 10px; min-height: 16px; }
-  .foot-note{ font-size: 11px; color: #6b6b8c; text-align:center; margin-top: 18px; line-height:1.6; }
+  .word-pill .by{
+    font-family:"Zen Kaku Gothic New",sans-serif;
+    font-weight:400;
+    font-size:10px;
+    color:var(--ink-soft);
+    display:block;
+    margin-top:1px;
+  }
+  .link-arrow{color:var(--gold);font-size:15px;}
+
+  .turn-banner{
+    text-align:center;
+    font-family:"Zen Maru Gothic",sans-serif;
+    font-weight:700;
+    font-size:15px;
+    padding:10px;
+    border-radius:10px;
+    margin-bottom:14px;
+    background:var(--paper);
+    border:1px solid var(--line);
+  }
+  .turn-banner.mine{background:#FBF3E1;border-color:var(--gold);color:var(--indigo-deep);}
+  .turn-banner .timer{color:var(--vermillion);font-weight:900;}
+
+  .input-row{display:flex;gap:8px;}
+  .input-row input{flex:1;}
+  .input-row button{flex-shrink:0;}
+
+  .msg{
+    font-size:13px;
+    margin-top:8px;
+    min-height:18px;
+    color:var(--vermillion);
+  }
+
+  .result-word{
+    text-align:center;
+    font-family:"Zen Maru Gothic",sans-serif;
+    font-weight:900;
+    font-size:22px;
+    color:var(--indigo-deep);
+    margin:6px 0 4px;
+  }
+  .result-sub{text-align:center;color:var(--ink-soft);font-size:13px;margin-bottom:20px;}
+
+  .hint{font-size:12px;color:var(--ink-soft);margin-top:10px;line-height:1.6;}
+  .footer-note{text-align:center;font-size:11px;color:var(--ink-soft);margin-top:16px;}
+  .code-share{
+    display:flex;gap:8px;margin-bottom:22px;
+  }
+  .code-share input{flex:1;background:var(--paper);text-align:center;font-family:"Zen Maru Gothic",sans-serif;font-weight:700;letter-spacing:.1em;}
 </style>
 </head>
 <body>
-<div id="app"></div>
+<div class="stage">
+  <header class="app-head">
+    <h1>しりとりチェーン</h1>
+    <span class="tag">友だちとオンライン対戦</span>
+  </header>
 
-<!-- Firebase (compat SDK, no bundler needed) -->
-<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
+  <!-- ENTRY SCREEN -->
+  <section id="screen-entry" class="screen active">
+    <div class="card">
+      <div class="field">
+        <label for="name-input">あなたの名前</label>
+        <input type="text" id="name-input" maxlength="12" placeholder="例: たなか">
+      </div>
+
+      <button class="primary" id="btn-create">新しい部屋を作る</button>
+
+      <div class="divider">または</div>
+
+      <div class="field">
+        <label for="join-input">部屋コードを入力</label>
+        <input type="text" id="join-input" maxlength="6" placeholder="例: AB12CD" style="text-transform:uppercase;">
+      </div>
+      <button class="ghost" id="btn-join">この部屋に入る</button>
+      <div class="msg" id="entry-msg"></div>
+    </div>
+    <p class="hint">ひらがな・カタカナで単語をつなげよう。「ん」で終わったら脱落、最後まで残った人の勝ち。</p>
+  </section>
+
+  <!-- LOBBY SCREEN -->
+  <section id="screen-lobby" class="screen">
+    <div class="card">
+      <div class="room-code" id="lobby-code">------</div>
+      <div class="room-code-label">この部屋コードを友だちに共有してね</div>
+
+      <ul class="player-list" id="lobby-players"></ul>
+
+      <button class="primary" id="btn-start" disabled>ゲームを始める（2人以上で開始可）</button>
+      <div class="msg" id="lobby-msg"></div>
+      <button class="ghost" id="btn-leave-lobby" style="margin-top:10px;">部屋を出る</button>
+    </div>
+  </section>
+
+  <!-- GAME SCREEN -->
+  <section id="screen-game" class="screen">
+    <div class="card">
+      <div class="turn-banner" id="turn-banner">-</div>
+
+      <div class="chain-wrap" id="chain-wrap">
+        <div class="chain-empty">まだ言葉がつながっていません</div>
+      </div>
+
+      <div class="input-row">
+        <input type="text" id="word-input" placeholder="ひらがな・カタカナで入力" autocomplete="off">
+        <button class="primary" id="btn-submit">送信</button>
+      </div>
+      <div class="msg" id="game-msg"></div>
+
+      <ul class="player-list" id="game-players" style="margin-top:18px;"></ul>
+    </div>
+  </section>
+
+  <!-- RESULT SCREEN -->
+  <section id="screen-result" class="screen">
+    <div class="card">
+      <div class="result-word" id="result-title">-</div>
+      <div class="result-sub" id="result-sub"></div>
+      <button class="primary" id="btn-restart">もう一度遊ぶ</button>
+      <button class="ghost" id="btn-leave-result" style="margin-top:10px;">部屋を出る</button>
+    </div>
+  </section>
+
+  <p class="footer-note">Firebase Realtime Database でリアルタイム同期しています</p>
+</div>
+
+<!-- Firebase SDK (compat, script-tag style) -->
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
 
 <script>
-/* ---------------- Firebase 初期化 ---------------- */
+/* =========================================================
+   FIREBASE CONFIG
+   ========================================================= */
 const firebaseConfig = {
   apiKey: "AIzaSyDWxhILNkj0RrOV248Bh2zoFZfNq2G-3N0",
   authDomain: "zoukin-kart.firebaseapp.com",
+  databaseURL: "https://zoukin-kart-default-rtdb.firebaseio.com",
   projectId: "zoukin-kart",
   storageBucket: "zoukin-kart.firebasestorage.app",
   messagingSenderId: "627298939041",
   appId: "1:627298939041:web:3dafaed8c6d267f1d780e0",
   measurementId: "G-DDW4R9EXW5"
 };
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
 
-/* ---------------- プレイヤーID（端末ごとに固定） ---------------- */
-function getPlayerId(){
-  let id = localStorage.getItem('lieBellPlayerId');
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+/* =========================================================
+   LOCAL PLAYER IDENTITY
+   ========================================================= */
+function getMyId(){
+  let id = sessionStorage.getItem('shiritori_uid');
   if(!id){
-    id = 'p_' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
-    localStorage.setItem('lieBellPlayerId', id);
+    id = 'p_' + Math.random().toString(36).slice(2,10) + Date.now().toString(36);
+    sessionStorage.setItem('shiritori_uid', id);
   }
   return id;
 }
-const myId = getPlayerId();
+const MY_ID = getMyId();
 
-/* ---------------- 効果音（ベル音を Web Audio で合成） ---------------- */
-let audioCtx = null;
-function ensureAudio(){
-  if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  if(audioCtx.state === 'suspended') audioCtx.resume();
-}
-function playBell(){
-  ensureAudio();
-  const now = audioCtx.currentTime;
-  [880, 1320].forEach((freq, i) => {
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-    osc.type = i === 0 ? 'sine' : 'triangle';
-    osc.frequency.setValueAtTime(freq, now);
-    gain.gain.setValueAtTime(0, now);
-    gain.gain.linearRampToValueAtTime(i === 0 ? 0.35 : 0.12, now + 0.01);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.9);
-    osc.connect(gain).connect(audioCtx.destination);
-    osc.start(now);
-    osc.stop(now + 0.9);
-  });
+/* =========================================================
+   STATE
+   ========================================================= */
+let currentRoomId = null;
+let roomRef = null;
+let roomListener = null;
+let myName = '';
+let turnTimerInterval = null;
+
+const TURN_SECONDS = 30;
+
+/* =========================================================
+   HELPERS: screens
+   ========================================================= */
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
 }
 
-/* ---------------- 部屋コード（合言葉）の正規化 ---------------- */
-function sanitizeRoomCode(raw){
-  return raw.trim().replace(/[\/\.\s]+/g, '_').slice(0, 80);
+/* =========================================================
+   HELPERS: kana normalization for shiritori rules
+   ========================================================= */
+const SMALL_TO_NORMAL = {
+  'ぁ':'あ','ぃ':'い','ぅ':'う','ぇ':'え','ぉ':'お',
+  'ゃ':'や','ゅ':'ゆ','ょ':'よ','っ':'つ','ゎ':'わ',
+  'ァ':'あ','ィ':'い','ゥ':'う','ェ':'え','ォ':'お',
+  'ャ':'や','ュ':'ゆ','ョ':'よ','ッ':'つ','ヮ':'わ'
+};
+
+function katakanaToHiragana(str){
+  return str.replace(/[\u30A1-\u30F6]/g, ch =>
+    String.fromCharCode(ch.charCodeAt(0) - 0x60)
+  );
 }
 
-/* ---------------- アプリの状態 ---------------- */
-let myName = localStorage.getItem('lieBellName') || '';
-let roomId = null;
-let roomData = null;
-let unsub = null;
-let lastSoundId = null;
-let firstSnapshot = true;
-let flashMsg = '';
-let joinError = '';
-let voteChoice = null;
+function isValidKanaWord(str){
+  // only hiragana / katakana / long vowel mark, length >= 1
+  return /^[\u3041-\u3096\u30A1-\u30F6\u30FC]+$/.test(str);
+}
 
-const appEl = document.getElementById('app');
+function normalizeWord(str){
+  return katakanaToHiragana(str.trim());
+}
 
-/* ---------------- Firestore 参加処理 ---------------- */
-async function joinRoom(name, codeRaw){
-  const code = sanitizeRoomCode(codeRaw);
-  if(!name.trim() || !code){
-    joinError = '名前と合言葉を入力してください';
-    render();
-    return;
+function getFirstChar(normalized){
+  let c = normalized[0];
+  if(SMALL_TO_NORMAL[c]) c = SMALL_TO_NORMAL[c];
+  return c;
+}
+
+function getLastChar(normalized){
+  let s = normalized;
+  // strip trailing long-vowel marks, fall back to preceding vowel char (simplified)
+  let c = s[s.length - 1];
+  if(c === 'ー'){
+    // simplistic: just look at char before the mark
+    if(s.length > 1) c = s[s.length - 2];
   }
-  ensureAudio();
-  myName = name.trim();
-  localStorage.setItem('lieBellName', myName);
-  roomId = code;
-  const ref = db.collection('rooms').doc(roomId);
+  if(SMALL_TO_NORMAL[c]) c = SMALL_TO_NORMAL[c];
+  return c;
+}
+
+function endsWithN(normalized){
+  let last = normalized[normalized.length - 1];
+  return last === 'ん' || last === 'ン' || last === 'ん';
+}
+
+/* =========================================================
+   ROOM CODE
+   ========================================================= */
+function generateRoomCode(){
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let code = '';
+  for(let i=0;i<6;i++) code += chars[Math.floor(Math.random()*chars.length)];
+  return code;
+}
+
+/* =========================================================
+   CREATE / JOIN
+   ========================================================= */
+document.getElementById('btn-create').addEventListener('click', async () => {
+  const name = document.getElementById('name-input').value.trim();
+  const msg = document.getElementById('entry-msg');
+  if(!name){ msg.textContent = '名前を入力してください'; return; }
+  msg.textContent = '';
+  myName = name;
+
+  let code = generateRoomCode();
+  const roomData = {
+    hostId: MY_ID,
+    status: 'waiting',
+    createdAt: firebase.database.ServerValue.TIMESTAMP,
+    turnIndex: 0,
+    turnStartedAt: 0,
+    lastChar: '',
+    words: {},
+    players: {
+      [MY_ID]: { name: myName, order: 0, alive: true, joinedAt: firebase.database.ServerValue.TIMESTAMP }
+    }
+  };
+  try{
+    await db.ref('shiritoriRooms/' + code).set(roomData);
+    enterRoom(code);
+  }catch(e){
+    msg.textContent = '部屋の作成に失敗しました: ' + e.message;
+  }
+});
+
+document.getElementById('btn-join').addEventListener('click', async () => {
+  const name = document.getElementById('name-input').value.trim();
+  const code = document.getElementById('join-input').value.trim().toUpperCase();
+  const msg = document.getElementById('entry-msg');
+  if(!name){ msg.textContent = '名前を入力してください'; return; }
+  if(!code){ msg.textContent = '部屋コードを入力してください'; return; }
+  msg.textContent = '';
+  myName = name;
 
   try{
-    await db.runTransaction(async (tx) => {
-      const snap = await tx.get(ref);
-      if(!snap.exists){
-        tx.set(ref, {
-          hostId: myId,
-          status: 'lobby',
-          round: 0,
-          liarId: null,
-          soundEvent: null,
-          votes: {},
-          players: { [myId]: { name: myName, joinedAt: Date.now() } }
-        });
-      } else {
-        tx.update(ref, { [`players.${myId}`]: { name: myName, joinedAt: Date.now() } });
-      }
-    });
+    const snap = await db.ref('shiritoriRooms/' + code).get();
+    if(!snap.exists()){ msg.textContent = 'その部屋コードは見つかりませんでした'; return; }
+    const room = snap.val();
+
+    if(!room.players || !room.players[MY_ID]){
+      const order = room.players ? Object.keys(room.players).length : 0;
+      await db.ref(`shiritoriRooms/${code}/players/${MY_ID}`).set({
+        name: myName, order, alive: true, joinedAt: firebase.database.ServerValue.TIMESTAMP
+      });
+    }
+    enterRoom(code);
   }catch(e){
-    joinError = '参加に失敗しました。Firestore の設定をご確認ください。(' + e.message + ')';
-    render();
-    return;
+    msg.textContent = '参加に失敗しました: ' + e.message;
   }
+});
 
-  joinError = '';
-  subscribeRoom();
-}
-
-function subscribeRoom(){
-  const ref = db.collection('rooms').doc(roomId);
-  firstSnapshot = true;
-  unsub = ref.onSnapshot((snap) => {
-    if(!snap.exists) return;
-    roomData = snap.data();
-
-    const se = roomData.soundEvent;
-    if(firstSnapshot){
-      lastSoundId = se ? se.id : null;
-      firstSnapshot = false;
-    } else if(se && se.id !== lastSoundId){
-      lastSoundId = se.id;
-      playBell();
-      flashMsg = (se.name || '誰か') + ' さんが鳴らしました 🔔';
-      shakeBell();
-      setTimeout(() => { flashMsg = ''; render(); }, 1600);
-    }
-    render();
+/* =========================================================
+   ENTER ROOM / LISTENER
+   ========================================================= */
+function enterRoom(code){
+  currentRoomId = code;
+  if(roomRef && roomListener) roomRef.off('value', roomListener);
+  roomRef = db.ref('shiritoriRooms/' + code);
+  roomListener = roomRef.on('value', snap => {
+    const room = snap.val();
+    if(!room){ return; }
+    renderRoom(room);
   });
 }
 
-function shakeBell(){
-  const btn = document.querySelector('.bell-btn');
-  if(!btn) return;
-  btn.classList.remove('ring');
-  void btn.offsetWidth;
-  btn.classList.add('ring');
+function leaveRoomUI(){
+  if(roomRef && roomListener){ roomRef.off('value', roomListener); }
+  roomRef = null; roomListener = null; currentRoomId = null;
+  clearInterval(turnTimerInterval);
+  showScreen('screen-entry');
 }
+document.getElementById('btn-leave-lobby').addEventListener('click', leaveRoomUI);
+document.getElementById('btn-leave-result').addEventListener('click', leaveRoomUI);
 
-/* ---------------- ゲーム操作 ---------------- */
-function ref(){ return db.collection('rooms').doc(roomId); }
-
-function startGame(){
-  const ids = Object.keys(roomData.players || {});
-  if(ids.length < 3){ return; }
-  const liarId = ids[Math.floor(Math.random() * ids.length)];
-  ref().update({
-    status: 'playing',
-    liarId,
-    round: (roomData.round || 0) + 1,
-    soundEvent: null,
-    votes: {}
-  });
-}
-
-function ringBell(){
-  ensureAudio();
-  ref().update({
-    soundEvent: {
-      id: 'e_' + Math.random().toString(36).slice(2, 10) + Date.now(),
-      by: myId,
-      name: myName,
-      ts: Date.now()
-    }
-  });
-}
-
-function goToVoting(){
-  ref().update({ status: 'voting', votes: {} });
-}
-
-function castVote(targetId){
-  voteChoice = targetId;
-  ref().update({ [`votes.${myId}`]: targetId });
-  render();
-}
-
-function goToResult(){
-  ref().update({ status: 'result' });
-}
-
-function playAgain(){
-  const ids = Object.keys(roomData.players || {});
-  if(ids.length < 3) return;
-  let liarId = ids[Math.floor(Math.random() * ids.length)];
-  ref().update({
-    status: 'playing',
-    liarId,
-    round: (roomData.round || 0) + 1,
-    soundEvent: null,
-    votes: {}
-  });
-}
-
-function backToLobby(){
-  ref().update({ status: 'lobby', liarId: null, soundEvent: null, votes: {} });
-}
-
-/* ---------------- 画面描画 ---------------- */
-function render(){
-  if(!roomId || !roomData){
-    renderEntry();
-    return;
+/* =========================================================
+   RENDER
+   ========================================================= */
+function renderRoom(room){
+  if(room.status === 'waiting'){
+    renderLobby(room);
+    showScreen('screen-lobby');
+  } else if(room.status === 'playing'){
+    renderGame(room);
+    showScreen('screen-game');
+  } else if(room.status === 'finished'){
+    renderResult(room);
+    clearInterval(turnTimerInterval);
+    showScreen('screen-result');
   }
-  const status = roomData.status;
-  if(status === 'lobby') renderLobby();
-  else if(status === 'playing') renderPlaying();
-  else if(status === 'voting') renderVoting();
-  else if(status === 'result') renderResult();
 }
 
-function renderEntry(){
-  appEl.innerHTML = `
-    <div class="card">
-      <h1 class="title">鳴らし鬼</h1>
-      <p class="lede">ひとりだけ嘘つき。嘘つきはいつでもベルを鳴らせる。みんなで質問して、最後に投票で見破ろう。</p>
-      <label>名前</label>
-      <input id="nameInput" type="text" maxlength="12" placeholder="例：ゆうき" value="${escapeHtml(myName)}">
-      <label>合言葉（部屋のパスワード）</label>
-      <input id="codeInput" type="text" maxlength="30" placeholder="例：よるのひみつ">
-      <button class="btn btn-primary" id="joinBtn">部屋に入る</button>
-      <div class="err">${joinError}</div>
-      <div class="foot-note">同じ合言葉を入力した人同士が同じ部屋につながります。部屋が無ければ自動的に作られます。</div>
-    </div>
-  `;
-  document.getElementById('joinBtn').onclick = () => {
-    joinRoom(document.getElementById('nameInput').value, document.getElementById('codeInput').value);
-  };
+function playersSorted(room){
+  const players = room.players || {};
+  return Object.keys(players)
+    .map(id => ({ id, ...players[id] }))
+    .sort((a,b) => a.order - b.order);
 }
 
-function renderLobby(){
-  const players = roomData.players || {};
-  const ids = Object.keys(players);
-  const isHost = roomData.hostId === myId;
-  appEl.innerHTML = `
-    <div class="card">
-      <h1 class="title">ロビー</h1>
-      <p class="lede">全員そろったらホストがゲームを開始します。</p>
-      <div class="room-tag">
-        <span class="code">${escapeHtml(roomId)}</span>
-        <button id="copyBtn">合言葉をコピー</button>
-      </div>
-      <div class="section-label">参加者（${ids.length}人）</div>
-      <ul class="players">
-        ${ids.map(id => `
-          <li class="${id === myId ? 'me' : ''}">
-            <span>${escapeHtml(players[id].name)}${id === myId ? '（あなた）' : ''}</span>
-            ${id === roomData.hostId ? '<span class="tag">ホスト</span>' : ''}
-          </li>
-        `).join('')}
-      </ul>
-      ${isHost
-        ? `<button class="btn btn-primary" id="startBtn" ${ids.length < 3 ? 'disabled' : ''}>ゲーム開始</button>
-           ${ids.length < 3 ? '<div class="err">3人以上で開始できます</div>' : ''}`
-        : `<div class="bell-hint" style="margin-top:20px;">ホストの開始を待っています…</div>`
+function renderLobby(room){
+  document.getElementById('lobby-code').textContent = currentRoomId;
+  const list = document.getElementById('lobby-players');
+  list.innerHTML = '';
+  const players = playersSorted(room);
+  players.forEach(p => {
+    const li = document.createElement('li');
+    li.innerHTML = `<span>${escapeHtml(p.name)}${p.id===MY_ID ? '（あなた）' : ''}</span>`;
+    if(p.id === room.hostId){
+      const b = document.createElement('span');
+      b.className = 'badge host';
+      b.textContent = 'ホスト';
+      li.appendChild(b);
+    }
+    list.appendChild(li);
+  });
+
+  const startBtn = document.getElementById('btn-start');
+  const isHost = room.hostId === MY_ID;
+  startBtn.style.display = isHost ? 'block' : 'none';
+  startBtn.disabled = players.length < 2;
+  document.getElementById('lobby-msg').textContent = isHost
+    ? (players.length < 2 ? 'あと1人以上参加すると開始できます' : '')
+    : 'ホストの開始を待っています…';
+}
+
+document.getElementById('btn-start').addEventListener('click', async () => {
+  const snap = await roomRef.get();
+  const room = snap.val();
+  const players = playersSorted(room);
+  if(players.length < 2) return;
+  await roomRef.update({
+    status: 'playing',
+    turnIndex: 0,
+    turnStartedAt: firebase.database.ServerValue.TIMESTAMP,
+    lastChar: '',
+    words: {},
+    loserId: null,
+    winnerId: null
+  });
+  // ensure everyone marked alive at game start
+  const updates = {};
+  players.forEach(p => { updates[`players/${p.id}/alive`] = true; });
+  await roomRef.update(updates);
+});
+
+function wordsAsArray(room){
+  const w = room.words || {};
+  return Object.keys(w).map(k => ({ id:k, ...w[k] })).sort((a,b) => a.seq - b.seq);
+}
+
+function renderGame(room){
+  const players = playersSorted(room);
+  const alivePlayers = players.filter(p => p.alive !== false);
+  const turnPlayer = alivePlayers[room.turnIndex % alivePlayers.length];
+
+  // chain
+  const wrap = document.getElementById('chain-wrap');
+  const words = wordsAsArray(room);
+  if(words.length === 0){
+    wrap.innerHTML = '<div class="chain-empty">さいしょの言葉を入力してスタート！</div>';
+  } else {
+    wrap.innerHTML = '';
+    words.forEach((w, idx) => {
+      if(idx > 0){
+        const arrow = document.createElement('span');
+        arrow.className = 'link-arrow';
+        arrow.textContent = '→';
+        wrap.appendChild(arrow);
       }
-    </div>
-  `;
-  document.getElementById('copyBtn').onclick = () => {
-    navigator.clipboard?.writeText(roomId);
-  };
-  const startBtn = document.getElementById('startBtn');
-  if(startBtn) startBtn.onclick = startGame;
-}
+      const pill = document.createElement('span');
+      pill.className = 'word-pill';
+      pill.innerHTML = `${escapeHtml(w.word)}<span class="by">${escapeHtml(w.byName || '')}</span>`;
+      wrap.appendChild(pill);
+    });
+    wrap.scrollTop = wrap.scrollHeight;
+  }
 
-function renderPlaying(){
-  const isLiar = roomData.liarId === myId;
-  const isHost = roomData.hostId === myId;
-  const players = roomData.players || {};
-  appEl.innerHTML = `
-    <div class="card">
-      <div class="role-box ${isLiar ? 'role-liar' : 'role-honest'}">
-        <div class="role-icon">${isLiar ? '🤥' : '🕵️'}</div>
-        <h2>${isLiar ? 'あなたが嘘つきです' : 'あなたは正直者です'}</h2>
-        <p>${isLiar ? 'みんなの質問にバレないよう答えよう。好きなタイミングでベルを鳴らせます。' : 'みんなで質問して、嘘つきを見つけ出そう。'}</p>
-      </div>
-      <div class="bell-wrap">
-        <button class="bell-btn" id="bellBtn">🔔</button>
-        <div class="bell-hint">誰でも、いつでも鳴らせます</div>
-        <div class="flash">${flashMsg}</div>
-      </div>
-      ${isHost ? `<button class="btn btn-primary" id="voteBtn">投票へ進む</button>` : ''}
-      <div class="foot-note">${Object.keys(players).length}人でプレイ中・ラウンド${roomData.round || 1}</div>
-    </div>
-  `;
-  document.getElementById('bellBtn').onclick = ringBell;
-  const voteBtn = document.getElementById('voteBtn');
-  if(voteBtn) voteBtn.onclick = goToVoting;
-}
+  // turn banner + timer
+  const banner = document.getElementById('turn-banner');
+  const isMyTurn = turnPlayer && turnPlayer.id === MY_ID;
+  banner.className = 'turn-banner' + (isMyTurn ? ' mine' : '');
+  updateTurnBanner(room, turnPlayer, isMyTurn);
+  clearInterval(turnTimerInterval);
+  turnTimerInterval = setInterval(() => updateTurnBanner(room, turnPlayer, isMyTurn), 1000);
 
-function renderVoting(){
-  const players = roomData.players || {};
-  const ids = Object.keys(players);
-  const votes = roomData.votes || {};
-  const myVote = votes[myId];
-  const votedCount = Object.keys(votes).length;
-  const isHost = roomData.hostId === myId;
-  appEl.innerHTML = `
-    <div class="card">
-      <h1 class="title">投票</h1>
-      <p class="lede">誰が嘘つきだと思いますか？</p>
-      <ul class="vote-list">
-        ${ids.map(id => `
-          <li data-id="${id}" class="${myVote === id ? 'picked' : ''}">
-            <span>${escapeHtml(players[id].name)}${id === myId ? '（あなた）' : ''}</span>
-            ${myVote === id ? '<span>✓</span>' : ''}
-          </li>
-        `).join('')}
-      </ul>
-      <div class="vote-progress">${votedCount} / ${ids.length} 人が投票済み</div>
-      ${isHost ? `<button class="btn btn-primary" id="resultBtn">結果を見る</button>` : ''}
-    </div>
-  `;
-  appEl.querySelectorAll('.vote-list li').forEach(li => {
-    li.onclick = () => castVote(li.dataset.id);
+  // input enable state
+  const input = document.getElementById('word-input');
+  const btn = document.getElementById('btn-submit');
+  input.disabled = !isMyTurn;
+  btn.disabled = !isMyTurn;
+  input.placeholder = isMyTurn
+    ? (room.lastChar ? `「${room.lastChar}」から始まる言葉` : 'さいしょの言葉を入力')
+    : `${turnPlayer ? turnPlayer.name : ''}さんの番です`;
+
+  // players list
+  const list = document.getElementById('game-players');
+  list.innerHTML = '';
+  players.forEach(p => {
+    const li = document.createElement('li');
+    const dead = p.alive === false;
+    li.className = (turnPlayer && p.id === turnPlayer.id && !dead ? 'turn ' : '') + (dead ? 'dead' : '');
+    li.innerHTML = `<span>${escapeHtml(p.name)}${p.id===MY_ID ? '（あなた）' : ''}</span>`;
+    if(dead){
+      const b = document.createElement('span'); b.className='badge'; b.style.background='var(--vermillion)'; b.textContent='脱落';
+      li.appendChild(b);
+    } else if(turnPlayer && p.id === turnPlayer.id){
+      const b = document.createElement('span'); b.className='badge turn'; b.textContent='番';
+      li.appendChild(b);
+    }
+    list.appendChild(li);
   });
-  const resultBtn = document.getElementById('resultBtn');
-  if(resultBtn) resultBtn.onclick = goToResult;
 }
 
-function renderResult(){
-  const players = roomData.players || {};
-  const ids = Object.keys(players);
-  const votes = roomData.votes || {};
-  const liarId = roomData.liarId;
-  const isHost = roomData.hostId === myId;
+function updateTurnBanner(room, turnPlayer, isMyTurn){
+  const banner = document.getElementById('turn-banner');
+  if(!turnPlayer){ banner.textContent = '進行中…'; return; }
+  const started = room.turnStartedAt || Date.now();
+  const remain = Math.max(0, TURN_SECONDS - Math.floor((Date.now() - started)/1000));
+  const who = isMyTurn ? 'あなたの番です' : `${turnPlayer.name} さんの番`;
+  banner.innerHTML = `${escapeHtml(who)}　<span class="timer">残り${remain}秒</span>`;
 
-  const tally = {};
-  ids.forEach(id => tally[id] = 0);
-  Object.values(votes).forEach(v => { if(tally[v] !== undefined) tally[v]++; });
-  const maxVotes = Math.max(1, ...Object.values(tally));
-
-  const topVoted = ids.filter(id => tally[id] === Math.max(...Object.values(tally)) && tally[id] > 0);
-  const caught = topVoted.length === 1 && topVoted[0] === liarId;
-
-  appEl.innerHTML = `
-    <div class="card">
-      <div class="reveal">
-        <div class="section-label">嘘つきは…</div>
-        <div class="who">${escapeHtml(players[liarId]?.name || '不明')}</div>
-        <p class="lede" style="margin-top:6px;">${caught ? 'みんなが見破りました！🎉' : '嘘つきは逃げ切りました…🕶️'}</p>
-      </div>
-      <div class="section-label">投票結果</div>
-      <ul class="tally">
-        ${ids.map(id => `
-          <li>
-            <span style="width:76px; flex-shrink:0;">${escapeHtml(players[id].name)}</span>
-            <span class="bar-track"><span class="bar-fill" style="width:${(tally[id]/maxVotes)*100}%"></span></span>
-            <span class="count">${tally[id]}</span>
-          </li>
-        `).join('')}
-      </ul>
-      ${isHost ? `
-        <button class="btn btn-primary" id="againBtn">もう一度あそぶ</button>
-        <button class="btn btn-ghost" id="lobbyBtn">ロビーに戻る</button>
-      ` : `<div class="bell-hint" style="margin-top:20px;">ホストの操作を待っています…</div>`}
-    </div>
-  `;
-  const againBtn = document.getElementById('againBtn');
-  if(againBtn) againBtn.onclick = playAgain;
-  const lobbyBtn = document.getElementById('lobbyBtn');
-  if(lobbyBtn) lobbyBtn.onclick = backToLobby;
+  // if I'm the turn player and time's up, auto-eliminate (any client can also do this safely-ish)
+  if(remain <= 0 && turnPlayer.id === MY_ID){
+    handleTimeout();
+  }
 }
 
-function escapeHtml(s){
-  return String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function renderResult(room){
+  const players = playersSorted(room);
+  const winner = players.find(p => p.id === room.winnerId);
+  const title = document.getElementById('result-title');
+  const sub = document.getElementById('result-sub');
+  if(winner){
+    title.textContent = `🏆 ${winner.name} さんの勝ち！`;
+  } else {
+    title.textContent = 'ゲーム終了';
+  }
+  const loser = players.find(p => p.id === room.loserId);
+  sub.textContent = loser ? `${loser.name} さんが「ん」で終わる言葉を使って脱落しました` : '';
+
+  const isHost = room.hostId === MY_ID;
+  document.getElementById('btn-restart').style.display = isHost ? 'block' : 'none';
 }
 
-render();
+document.getElementById('btn-restart').addEventListener('click', async () => {
+  const snap = await roomRef.get();
+  const room = snap.val();
+  const players = playersSorted(room);
+  const updates = {
+    status: 'waiting',
+    turnIndex: 0,
+    turnStartedAt: 0,
+    lastChar: '',
+    words: {},
+    loserId: null,
+    winnerId: null
+  };
+  players.forEach(p => { updates[`players/${p.id}/alive`] = true; });
+  await roomRef.update(updates);
+});
+
+/* =========================================================
+   SUBMIT WORD
+   ========================================================= */
+document.getElementById('btn-submit').addEventListener('click', submitWord);
+document.getElementById('word-input').addEventListener('keydown', e => {
+  if(e.key === 'Enter') submitWord();
+});
+
+async function submitWord(){
+  const input = document.getElementById('word-input');
+  const msg = document.getElementById('game-msg');
+  const raw = input.value;
+  msg.textContent = '';
+  if(!raw || !raw.trim()){ return; }
+
+  const snap = await roomRef.get();
+  const room = snap.val();
+  if(!room || room.status !== 'playing') return;
+
+  const players = playersSorted(room);
+  const alivePlayers = players.filter(p => p.alive !== false);
+  const turnPlayer = alivePlayers[room.turnIndex % alivePlayers.length];
+  if(!turnPlayer || turnPlayer.id !== MY_ID){
+    msg.textContent = 'あなたの番ではありません';
+    return;
+  }
+
+  const normalized = normalizeWord(raw);
+  if(!isValidKanaWord(normalized)){
+    msg.textContent = 'ひらがな・カタカナのみで入力してください';
+    return;
+  }
+
+  const words = wordsAsArray(room);
+  const usedSet = new Set(words.map(w => w.normalized));
+  if(usedSet.has(normalized)){
+    msg.textContent = 'その言葉はすでに使われています';
+    return;
+  }
+
+  if(room.lastChar){
+    const first = getFirstChar(normalized);
+    if(first !== room.lastChar){
+      msg.textContent = `「${room.lastChar}」から始まる言葉を入力してください`;
+      return;
+    }
+  }
+
+  const seq = words.length;
+  const wordId = 'w' + seq + '_' + Date.now().toString(36);
+  const wentN = endsWithN(normalized);
+
+  const updates = {};
+  updates[`words/${wordId}`] = {
+    word: raw.trim(),
+    normalized,
+    byId: MY_ID,
+    byName: turnPlayer.name,
+    seq
+  };
+
+  if(wentN){
+    // this player is eliminated
+    updates[`players/${MY_ID}/alive`] = false;
+    const remaining = alivePlayers.filter(p => p.id !== MY_ID);
+    if(remaining.length <= 1){
+      updates['status'] = 'finished';
+      updates['loserId'] = MY_ID;
+      updates['winnerId'] = remaining.length === 1 ? remaining[0].id : null;
+    } else {
+      // move to next alive player (indexes shift once this player is excluded)
+      updates['turnIndex'] = room.turnIndex % remaining.length;
+      updates['turnStartedAt'] = firebase.database.ServerValue.TIMESTAMP;
+      updates['lastChar'] = getLastChar(normalized);
+    }
+  } else {
+    const nextAliveCount = alivePlayers.length;
+    updates['turnIndex'] = (room.turnIndex + 1) % nextAliveCount;
+    updates['turnStartedAt'] = firebase.database.ServerValue.TIMESTAMP;
+    updates['lastChar'] = getLastChar(normalized);
+  }
+
+  await roomRef.update(updates);
+  input.value = '';
+}
+
+async function handleTimeout(){
+  const snap = await roomRef.get();
+  const room = snap.val();
+  if(!room || room.status !== 'playing') return;
+  const players = playersSorted(room);
+  const alivePlayers = players.filter(p => p.alive !== false);
+  const turnPlayer = alivePlayers[room.turnIndex % alivePlayers.length];
+  if(!turnPlayer || turnPlayer.id !== MY_ID) return;
+
+  // double-check time really elapsed to avoid race
+  const started = room.turnStartedAt || Date.now();
+  if(Date.now() - started < TURN_SECONDS * 1000) return;
+
+  const updates = {};
+  updates[`players/${MY_ID}/alive`] = false;
+  const remaining = alivePlayers.filter(p => p.id !== MY_ID);
+  if(remaining.length <= 1){
+    updates['status'] = 'finished';
+    updates['loserId'] = MY_ID;
+    updates['winnerId'] = remaining.length === 1 ? remaining[0].id : null;
+  } else {
+    updates['turnIndex'] = room.turnIndex % remaining.length;
+    updates['turnStartedAt'] = firebase.database.ServerValue.TIMESTAMP;
+  }
+  await roomRef.update(updates);
+}
+
+/* =========================================================
+   UTIL
+   ========================================================= */
+function escapeHtml(str){
+  return String(str).replace(/[&<>"']/g, m => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[m]));
+}
 </script>
 </body>
 </html>
