@@ -297,8 +297,12 @@
   const roomScreen = $("#screen-room");
 
   /* ---------------- Auth ---------------- */
+  let authFailed = false;
   auth.signInAnonymously().catch(err=>{
-    $("#home-error").textContent = "認証エラー: " + err.message;
+    authFailed = true;
+    $("#home-error").textContent = "認証エラー: " + err.message +
+      "（Firebase Console → Authentication → Sign-in method で「匿名」を有効にしてください）";
+    console.error("signInAnonymously failed:", err);
   });
   auth.onAuthStateChanged(user=>{
     if(user){ uid = user.uid; }
@@ -329,9 +333,11 @@
   $("#btn-create-room").addEventListener("click", async ()=>{
     const vals = readHomeInputs();
     if(!vals) return;
-    await ensureAuth();
-    const ref = db.ref("rooms/" + vals.rid);
+    const btn = $("#btn-create-room");
+    btn.disabled = true; const orig = btn.textContent; btn.textContent = "作成中...";
     try{
+      await ensureAuth();
+      const ref = db.ref("rooms/" + vals.rid);
       const snap = await ref.once("value");
       if(snap.exists()){
         $("#home-error").textContent = "そのルームIDは既に使われています。参加するには「既存のルームに参加する」を押してください。";
@@ -344,15 +350,20 @@
       enterRoom(vals.name, vals.rid);
     }catch(err){
       $("#home-error").textContent = "作成に失敗しました: " + err.message;
+      console.error("create room failed:", err);
+    }finally{
+      btn.disabled = false; btn.textContent = orig;
     }
   });
 
   $("#btn-join-room").addEventListener("click", async ()=>{
     const vals = readHomeInputs();
     if(!vals) return;
-    await ensureAuth();
-    const ref = db.ref("rooms/" + vals.rid);
+    const btn = $("#btn-join-room");
+    btn.disabled = true; const orig = btn.textContent; btn.textContent = "参加中...";
     try{
+      await ensureAuth();
+      const ref = db.ref("rooms/" + vals.rid);
       const snap = await ref.once("value");
       if(!snap.exists()){
         $("#home-error").textContent = "そのルームIDは見つかりませんでした。";
@@ -361,14 +372,22 @@
       enterRoom(vals.name, vals.rid);
     }catch(err){
       $("#home-error").textContent = "参加に失敗しました: " + err.message;
+      console.error("join room failed:", err);
+    }finally{
+      btn.disabled = false; btn.textContent = orig;
     }
   });
 
   function ensureAuth(){
-    return new Promise((resolve)=>{
+    return new Promise((resolve, reject)=>{
       if(uid){ resolve(); return; }
+      if(authFailed){ reject(new Error("認証に失敗しています。Firebase Consoleで匿名認証を有効にしてから再読み込みしてください。")); return; }
+      const timeout = setTimeout(()=>{
+        unsub();
+        reject(new Error("認証がタイムアウトしました。ネットワーク接続とFirebaseの匿名認証設定を確認してください。"));
+      }, 8000);
       const unsub = auth.onAuthStateChanged(user=>{
-        if(user){ uid = user.uid; unsub(); resolve(); }
+        if(user){ clearTimeout(timeout); uid = user.uid; unsub(); resolve(); }
       });
     });
   }
@@ -524,9 +543,30 @@
   });
 
   /* ---------------- YouTube video loading ---------------- */
-  function extractVideoId(url){
-    const m = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{6,15})/);
-    return m ? m[1] : null;
+  function extractVideoId(raw){
+    if(!raw) return null;
+    let str = raw.trim();
+
+    // normalize full-width characters that mobile keyboards / clipboards sometimes insert
+    str = str.replace(/[０-９Ａ-Ｚａ-ｚ]/g, ch => String.fromCharCode(ch.charCodeAt(0) - 0xFEE0));
+    str = str.replace(/？/g, "?").replace(/＝/g, "=").replace(/＆/g, "&").replace(/／/g, "/").replace(/：/g, ":");
+    str = str.replace(/\s+/g, "");
+
+    // pasted a bare video ID (no URL at all)
+    if(/^[a-zA-Z0-9_-]{10,12}$/.test(str)) return str;
+
+    const patterns = [
+      /[?&]v=([a-zA-Z0-9_-]{6,15})/,     // watch?v=ID  (any subdomain: www./m./music.)
+      /youtu\.be\/([a-zA-Z0-9_-]{6,15})/, // youtu.be/ID
+      /\/embed\/([a-zA-Z0-9_-]{6,15})/,   // /embed/ID
+      /\/shorts\/([a-zA-Z0-9_-]{6,15})/,  // /shorts/ID
+      /\/live\/([a-zA-Z0-9_-]{6,15})/     // /live/ID
+    ];
+    for(const p of patterns){
+      const m = str.match(p);
+      if(m) return m[1];
+    }
+    return null;
   }
 
   $("#btn-load-video").addEventListener("click", ()=>{
