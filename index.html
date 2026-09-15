@@ -2,797 +2,645 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>しりとりチェーン | オンライン対戦</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<title>同時視聴ルーム</title>
 <style>
   :root{
-    --paper:#F2EEE3;
-    --paper-raised:#FAF8F1;
-    --ink:#26344B;
-    --ink-soft:#5B6B82;
-    --indigo:#2F4A7A;
-    --indigo-deep:#1C2E4A;
-    --gold:#C99A3D;
-    --vermillion:#C1432E;
-    --line:#D8D0BC;
-    --radius:18px;
+    --bg:#10121A;
+    --panel:#191C28;
+    --panel-2:#21253A;
+    --border:rgba(255,255,255,0.08);
+    --accent:#FFB454;
+    --accent-dim:#8A5E24;
+    --danger:#FF5C5C;
+    --text:#F1F1F4;
+    --text-dim:#9AA0B8;
+    --radius:14px;
   }
   *{box-sizing:border-box;}
-  html,body{margin:0;padding:0;}
+  html,body{height:100%;}
   body{
-    min-height:100vh;
-    background:
-      radial-gradient(circle at 15% 8%, rgba(47,74,122,0.06), transparent 40%),
-      radial-gradient(circle at 85% 92%, rgba(201,154,61,0.08), transparent 45%),
-      var(--paper);
-    font-family:"Zen Kaku Gothic New","Noto Sans JP",sans-serif;
-    color:var(--ink);
-    display:flex;
-    justify-content:center;
-    padding:28px 16px 60px;
-  }
-  .stage{width:100%;max-width:460px;}
-  header.app-head{
-    display:flex;
-    align-items:baseline;
-    gap:10px;
-    margin-bottom:22px;
-    padding-left:2px;
-  }
-  header.app-head h1{
-    font-family:"Zen Maru Gothic",sans-serif;
-    font-weight:900;
-    font-size:26px;
-    letter-spacing:.02em;
     margin:0;
-    color:var(--indigo-deep);
+    background:radial-gradient(circle at 50% -10%, #1c2036 0%, #10121A 55%);
+    color:var(--text);
+    font-family:"Hiragino Sans","Hiragino Kaku Gothic ProN","Noto Sans JP",system-ui,sans-serif;
+    -webkit-tap-highlight-color:transparent;
   }
-  header.app-head span.tag{
-    font-size:12px;
-    color:var(--ink-soft);
-    border-left:2px solid var(--line);
-    padding-left:10px;
-  }
-  .card{
-    background:var(--paper-raised);
-    border:1px solid var(--line);
-    border-radius:var(--radius);
-    padding:26px 22px;
-    box-shadow:0 1px 0 rgba(38,52,75,0.04);
-  }
-  .screen{display:none;}
-  .screen.active{display:block;animation:rise .35s ease;}
-  @keyframes rise{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+  #app{min-height:100dvh; display:flex; flex-direction:column;}
+  .screen{display:none; flex:1; flex-direction:column;}
+  .screen.active{display:flex;}
 
-  label{
-    display:block;
-    font-size:13px;
-    color:var(--ink-soft);
-    margin:0 0 6px 2px;
+  /* ---------- HOME ---------- */
+  #screen-home{align-items:center; justify-content:center; padding:32px 20px;}
+  .home-card{
+    width:100%; max-width:400px;
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:20px;
+    padding:28px 24px 32px;
   }
+  .brand{display:flex; align-items:baseline; gap:8px; margin-bottom:4px;}
+  .brand .glow{
+    width:10px; height:10px; border-radius:50%;
+    background:var(--accent);
+    box-shadow:0 0 14px 3px var(--accent);
+    display:inline-block;
+  }
+  .brand h1{font-size:21px; margin:0; font-weight:700; letter-spacing:.01em;}
+  .brand-sub{color:var(--text-dim); font-size:13px; margin:0 0 26px;}
+
+  label{display:block; font-size:12.5px; color:var(--text-dim); margin:18px 0 6px;}
+  label:first-of-type{margin-top:0;}
   input[type=text]{
-    width:100%;
-    font-family:inherit;
-    font-size:17px;
-    padding:12px 14px;
-    border:1.5px solid var(--line);
-    border-radius:12px;
-    background:#fff;
-    color:var(--ink);
-    outline:none;
-    transition:border-color .15s;
+    width:100%; padding:12px 14px; border-radius:10px;
+    border:1px solid var(--border); background:var(--panel-2);
+    color:var(--text); font-size:15px; outline:none;
   }
-  input[type=text]:focus{border-color:var(--indigo);}
-  .field{margin-bottom:16px;}
+  input[type=text]:focus{border-color:var(--accent);}
+  .row-inline{display:flex; gap:8px;}
+  .row-inline input{flex:1;}
 
-  button{
-    font-family:"Zen Maru Gothic",sans-serif;
-    font-weight:700;
-    font-size:15px;
-    border:none;
-    border-radius:12px;
-    padding:13px 18px;
-    cursor:pointer;
-    transition:transform .08s, background .15s;
+  .btn{
+    appearance:none; border:none; cursor:pointer;
+    border-radius:10px; padding:12px 16px; font-size:14.5px; font-weight:600;
+    transition:transform .08s ease, opacity .15s ease;
   }
-  button:active{transform:scale(.98);}
-  button.primary{background:var(--indigo);color:#fff;width:100%;}
-  button.primary:hover{background:var(--indigo-deep);}
-  button.primary:disabled{background:#B9C0CC;cursor:not-allowed;}
-  button.ghost{background:transparent;color:var(--indigo);border:1.5px solid var(--indigo);width:100%;}
-  button.small{padding:8px 12px;font-size:13px;border-radius:9px;}
+  .btn:active{transform:scale(0.97);}
+  .btn-accent{background:var(--accent); color:#221202;}
+  .btn-ghost{background:var(--panel-2); color:var(--text); border:1px solid var(--border);}
+  .btn-danger{background:transparent; color:var(--danger); border:1px solid rgba(255,92,92,0.4);}
+  .btn-block{width:100%;}
+  .btn-sm{padding:8px 12px; font-size:13px;}
+  .actions{display:flex; flex-direction:column; gap:10px; margin-top:24px;}
+  .hint{color:var(--text-dim); font-size:11.5px; margin-top:6px; line-height:1.5;}
+  .error-msg{color:var(--danger); font-size:12.5px; margin-top:10px; min-height:16px;}
 
-  .divider{
-    display:flex;align-items:center;gap:10px;
-    margin:22px 0;color:var(--ink-soft);font-size:12px;
+  /* ---------- ROOM ---------- */
+  #screen-room{height:100dvh; overflow:hidden;}
+  .room-header{
+    display:flex; align-items:center; gap:10px;
+    padding:10px 14px; border-bottom:1px solid var(--border);
+    background:var(--panel);
+    flex-shrink:0;
   }
-  .divider::before,.divider::after{content:"";flex:1;height:1px;background:var(--line);}
+  .room-title{display:flex; flex-direction:column; min-width:0;}
+  .room-title .rid{font-size:14px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .room-title .sub{font-size:10.5px; color:var(--text-dim);}
+  .spacer{flex:1;}
+  .icon-btn{
+    background:var(--panel-2); border:1px solid var(--border); color:var(--text);
+    border-radius:9px; padding:8px 10px; font-size:12px; cursor:pointer; white-space:nowrap;
+  }
+  .icon-btn.danger{color:var(--danger); border-color:rgba(255,92,92,.35);}
 
-  .room-code{
-    font-family:"Zen Maru Gothic",sans-serif;
-    font-weight:900;
-    font-size:38px;
-    letter-spacing:.12em;
-    color:var(--indigo-deep);
-    text-align:center;
-    margin:4px 0 2px;
+  .participants{
+    display:flex; gap:6px; padding:8px 14px; overflow-x:auto;
+    border-bottom:1px solid var(--border); background:var(--panel); flex-shrink:0;
   }
-  .room-code-label{text-align:center;font-size:12px;color:var(--ink-soft);margin-bottom:18px;}
-
-  .player-list{list-style:none;margin:0 0 20px;padding:0;display:flex;flex-direction:column;gap:8px;}
-  .player-list li{
-    display:flex;justify-content:space-between;align-items:center;
-    background:var(--paper);
-    border:1px solid var(--line);
-    border-radius:10px;
-    padding:10px 14px;
-    font-size:14px;
+  .chip{
+    display:flex; align-items:center; gap:6px;
+    background:var(--panel-2); border:1px solid var(--border);
+    padding:5px 10px 5px 5px; border-radius:999px; font-size:12px; white-space:nowrap;
   }
-  .player-list li.turn{border-color:var(--gold);background:#FBF3E1;}
-  .player-list li.dead{opacity:.4;text-decoration:line-through;}
-  .badge{
-    font-size:11px;
-    padding:2px 8px;
-    border-radius:999px;
-    background:var(--indigo);
-    color:#fff;
-  }
-  .badge.host{background:var(--gold);}
-  .badge.turn{background:var(--vermillion);}
-
-  .chain-wrap{
-    display:flex;flex-wrap:wrap;gap:6px 4px;
-    align-items:center;
-    max-height:240px;
-    overflow-y:auto;
-    padding:14px;
-    background:var(--paper);
-    border:1px solid var(--line);
-    border-radius:12px;
-    margin-bottom:16px;
-  }
-  .chain-empty{color:var(--ink-soft);font-size:13px;padding:6px 2px;}
-  .word-pill{
-    font-family:"Zen Maru Gothic",sans-serif;
-    font-weight:700;
-    font-size:14px;
-    background:#fff;
-    border:1.5px solid var(--indigo);
-    color:var(--indigo-deep);
-    padding:6px 12px;
-    border-radius:999px;
-    white-space:nowrap;
-  }
-  .word-pill .by{
-    font-family:"Zen Kaku Gothic New",sans-serif;
-    font-weight:400;
-    font-size:10px;
-    color:var(--ink-soft);
-    display:block;
-    margin-top:1px;
-  }
-  .link-arrow{color:var(--gold);font-size:15px;}
-
-  .turn-banner{
-    text-align:center;
-    font-family:"Zen Maru Gothic",sans-serif;
-    font-weight:700;
-    font-size:15px;
-    padding:10px;
-    border-radius:10px;
-    margin-bottom:14px;
-    background:var(--paper);
-    border:1px solid var(--line);
-  }
-  .turn-banner.mine{background:#FBF3E1;border-color:var(--gold);color:var(--indigo-deep);}
-  .turn-banner .timer{color:var(--vermillion);font-weight:900;}
-
-  .input-row{display:flex;gap:8px;}
-  .input-row input{flex:1;}
-  .input-row button{flex-shrink:0;}
-
-  .msg{
-    font-size:13px;
-    margin-top:8px;
-    min-height:18px;
-    color:var(--vermillion);
+  .chip .dot{
+    width:20px; height:20px; border-radius:50%; background:var(--accent);
+    color:#221202; font-weight:700; font-size:11px;
+    display:flex; align-items:center; justify-content:center; flex-shrink:0;
   }
 
-  .result-word{
-    text-align:center;
-    font-family:"Zen Maru Gothic",sans-serif;
-    font-weight:900;
-    font-size:22px;
-    color:var(--indigo-deep);
-    margin:6px 0 4px;
-  }
-  .result-sub{text-align:center;color:var(--ink-soft);font-size:13px;margin-bottom:20px;}
+  .room-body{flex:1; display:flex; flex-direction:column; min-height:0; overflow:hidden;}
 
-  .hint{font-size:12px;color:var(--ink-soft);margin-top:10px;line-height:1.6;}
-  .footer-note{text-align:center;font-size:11px;color:var(--ink-soft);margin-top:16px;}
-  .code-share{
-    display:flex;gap:8px;margin-bottom:22px;
+  .video-col{display:flex; flex-direction:column; flex-shrink:0;}
+  .video-wrap{position:relative; width:100%; aspect-ratio:16/9; background:#000;}
+  #player{position:absolute; inset:0; width:100%; height:100%;}
+  .video-empty{
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    flex-direction:column; gap:6px; color:var(--text-dim); font-size:13px; text-align:center; padding:20px;
   }
-  .code-share input{flex:1;background:var(--paper);text-align:center;font-family:"Zen Maru Gothic",sans-serif;font-weight:700;letter-spacing:.1em;}
+
+  .load-row{
+    display:flex; gap:8px; padding:10px 14px; background:var(--panel);
+    border-bottom:1px solid var(--border);
+  }
+  .load-row input{flex:1;}
+
+  .tabbar{display:flex; gap:4px; padding:8px 14px 0; background:var(--panel); flex-shrink:0;}
+  .tab{
+    flex:1; text-align:center; padding:9px 6px; font-size:12.5px; font-weight:600;
+    color:var(--text-dim); border-bottom:2px solid transparent; cursor:pointer;
+  }
+  .tab.active{color:var(--accent); border-color:var(--accent);}
+
+  .panels{flex:1; min-height:0; display:flex; flex-direction:column; background:var(--panel);}
+  .panel{flex:1; min-height:0; display:none; flex-direction:column;}
+  .panel.active{display:flex;}
+
+  /* chat */
+  #chat-messages{flex:1; overflow-y:auto; padding:12px 14px; display:flex; flex-direction:column; gap:10px;}
+  .msg{max-width:86%; font-size:13.5px; line-height:1.45;}
+  .msg .name{font-size:11px; color:var(--accent); margin-bottom:2px; font-weight:700;}
+  .msg .text{background:var(--panel-2); padding:8px 11px; border-radius:12px; display:inline-block; word-break:break-word;}
+  .msg.me{align-self:flex-end;}
+  .msg.me .name{text-align:right; color:var(--text-dim);}
+  .msg.me .text{background:var(--accent-dim); color:#fff;}
+  .msg.system{align-self:center; color:var(--text-dim); font-size:11.5px;}
+  .msg.system .text{background:transparent; padding:2px;}
+
+  .chat-input-row{
+    display:flex; gap:8px; padding:10px 14px;
+    border-top:1px solid var(--border);
+    padding-bottom:max(10px, env(safe-area-inset-bottom));
+  }
+  .chat-input-row input{flex:1;}
+
+  /* comments panel */
+  #panel-comments{padding:20px 18px; align-items:center; justify-content:center; text-align:center; gap:10px; overflow-y:auto;}
+  #panel-comments p{color:var(--text-dim); font-size:13px; line-height:1.6; max-width:320px;}
+  #panel-comments a.btn{text-decoration:none; display:inline-block;}
+
+  /* desktop / wide layout */
+  @media (min-width:860px){
+    .room-body{flex-direction:row;}
+    .video-col{flex:1 1 62%; flex-shrink:1;}
+    .panels-outer{flex:1 1 38%; display:flex; flex-direction:column; min-width:320px; border-left:1px solid var(--border); min-height:0;}
+    .tabbar{border-left:1px solid var(--border);}
+    .video-wrap{aspect-ratio:16/9; max-height:calc(100dvh - 160px);}
+  }
+  @media (max-width:859px){
+    .panels-outer{flex:1; display:flex; flex-direction:column; min-height:0;}
+  }
+
+  ::-webkit-scrollbar{width:6px; height:6px;}
+  ::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.15); border-radius:3px;}
 </style>
 </head>
 <body>
-<div class="stage">
-  <header class="app-head">
-    <h1>しりとりチェーン</h1>
-    <span class="tag">友だちとオンライン対戦</span>
-  </header>
+<div id="app">
 
-  <!-- ENTRY SCREEN -->
-  <section id="screen-entry" class="screen active">
-    <div class="card">
-      <div class="field">
-        <label for="name-input">あなたの名前</label>
-        <input type="text" id="name-input" maxlength="12" placeholder="例: たなか">
+  <!-- ============ HOME SCREEN ============ -->
+  <div id="screen-home" class="screen active">
+    <div class="home-card">
+      <div class="brand"><span class="glow"></span><h1>同時視聴ルーム</h1></div>
+      <p class="brand-sub">YouTubeの動画をみんなで同時に見よう</p>
+
+      <label for="input-username">ユーザーネーム</label>
+      <input type="text" id="input-username" maxlength="20" placeholder="例：たろう">
+
+      <label for="input-roomid">ルームID</label>
+      <div class="row-inline">
+        <input type="text" id="input-roomid" maxlength="30" placeholder="例：movie-night-01">
+        <button class="btn btn-ghost btn-sm" id="btn-random-id" type="button">自動生成</button>
+      </div>
+      <p class="hint">好きなIDを決めて共有すれば、友達もそのIDで参加できます。</p>
+
+      <div class="actions">
+        <button class="btn btn-accent btn-block" id="btn-create-room">ルームを作成する</button>
+        <button class="btn btn-ghost btn-block" id="btn-join-room">既存のルームに参加する</button>
+      </div>
+      <p class="error-msg" id="home-error"></p>
+    </div>
+  </div>
+
+  <!-- ============ ROOM SCREEN ============ -->
+  <div id="screen-room" class="screen">
+    <div class="room-header">
+      <div class="room-title">
+        <div class="rid" id="room-title-id">-</div>
+        <div class="sub" id="room-title-sub">接続中...</div>
+      </div>
+      <div class="spacer"></div>
+      <button class="icon-btn" id="btn-leave">退出</button>
+      <button class="icon-btn danger" id="btn-delete-room">ルーム全削除</button>
+    </div>
+
+    <div class="participants" id="participants"></div>
+
+    <div class="room-body">
+      <div class="video-col">
+        <div class="video-wrap">
+          <div id="player"></div>
+          <div class="video-empty" id="video-empty">
+            まだ動画がセットされていません<br>下のURL欄にYouTubeのリンクを貼って読み込んでください
+          </div>
+        </div>
+        <div class="load-row">
+          <input type="text" id="input-video-url" placeholder="YouTubeのURLを貼り付け">
+          <button class="btn btn-accent btn-sm" id="btn-load-video">読込</button>
+          <button class="btn btn-ghost btn-sm" id="btn-resync">同期</button>
+        </div>
       </div>
 
-      <button class="primary" id="btn-create">新しい部屋を作る</button>
-
-      <div class="divider">または</div>
-
-      <div class="field">
-        <label for="join-input">部屋コードを入力</label>
-        <input type="text" id="join-input" maxlength="6" placeholder="例: AB12CD" style="text-transform:uppercase;">
+      <div class="panels-outer">
+        <div class="tabbar">
+          <div class="tab active" data-tab="chat">チャット</div>
+          <div class="tab" data-tab="comments">コメント欄</div>
+        </div>
+        <div class="panels">
+          <div class="panel active" id="panel-chat">
+            <div id="chat-messages"></div>
+            <div class="chat-input-row">
+              <input type="text" id="input-chat" maxlength="500" placeholder="メッセージを入力">
+              <button class="btn btn-accent btn-sm" id="btn-send-chat">送信</button>
+            </div>
+          </div>
+          <div class="panel" id="panel-comments">
+            <p>YouTubeのコメント欄は仕様上このアプリ内に直接埋め込むことができません。<br>下のボタンからYouTube側でその動画を開くと、コメントを見ることができます。</p>
+            <a class="btn btn-ghost" id="link-open-youtube" href="#" target="_blank" rel="noopener">YouTubeでコメントを見る</a>
+          </div>
+        </div>
       </div>
-      <button class="ghost" id="btn-join">この部屋に入る</button>
-      <div class="msg" id="entry-msg"></div>
     </div>
-    <p class="hint">ひらがな・カタカナで単語をつなげよう。「ん」で終わったら脱落、最後まで残った人の勝ち。</p>
-  </section>
+  </div>
 
-  <!-- LOBBY SCREEN -->
-  <section id="screen-lobby" class="screen">
-    <div class="card">
-      <div class="room-code" id="lobby-code">------</div>
-      <div class="room-code-label">この部屋コードを友だちに共有してね</div>
-
-      <ul class="player-list" id="lobby-players"></ul>
-
-      <button class="primary" id="btn-start" disabled>ゲームを始める（2人以上で開始可）</button>
-      <div class="msg" id="lobby-msg"></div>
-      <button class="ghost" id="btn-leave-lobby" style="margin-top:10px;">部屋を出る</button>
-    </div>
-  </section>
-
-  <!-- GAME SCREEN -->
-  <section id="screen-game" class="screen">
-    <div class="card">
-      <div class="turn-banner" id="turn-banner">-</div>
-
-      <div class="chain-wrap" id="chain-wrap">
-        <div class="chain-empty">まだ言葉がつながっていません</div>
-      </div>
-
-      <div class="input-row">
-        <input type="text" id="word-input" placeholder="ひらがな・カタカナで入力" autocomplete="off">
-        <button class="primary" id="btn-submit">送信</button>
-      </div>
-      <div class="msg" id="game-msg"></div>
-
-      <ul class="player-list" id="game-players" style="margin-top:18px;"></ul>
-    </div>
-  </section>
-
-  <!-- RESULT SCREEN -->
-  <section id="screen-result" class="screen">
-    <div class="card">
-      <div class="result-word" id="result-title">-</div>
-      <div class="result-sub" id="result-sub"></div>
-      <button class="primary" id="btn-restart">もう一度遊ぶ</button>
-      <button class="ghost" id="btn-leave-result" style="margin-top:10px;">部屋を出る</button>
-    </div>
-  </section>
-
-  <p class="footer-note">Firebase Realtime Database でリアルタイム同期しています</p>
 </div>
 
-<!-- Firebase SDK (compat, script-tag style) -->
+<!-- Firebase (compat SDK) -->
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+<!-- YouTube IFrame API -->
+<script src="https://www.youtube.com/iframe_api"></script>
 
 <script>
-/* =========================================================
-   FIREBASE CONFIG
-   ========================================================= */
-const firebaseConfig = {
-  apiKey: "AIzaSyDWxhILNkj0RrOV248Bh2zoFZfNq2G-3N0",
-  authDomain: "zoukin-kart.firebaseapp.com",
-  databaseURL: "https://zoukin-kart-default-rtdb.firebaseio.com",
-  projectId: "zoukin-kart",
-  storageBucket: "zoukin-kart.firebasestorage.app",
-  messagingSenderId: "627298939041",
-  appId: "1:627298939041:web:3dafaed8c6d267f1d780e0",
-  measurementId: "G-DDW4R9EXW5"
-};
+(function(){
+  "use strict";
 
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
-
-/* =========================================================
-   LOCAL PLAYER IDENTITY
-   ========================================================= */
-function getMyId(){
-  let id = sessionStorage.getItem('shiritori_uid');
-  if(!id){
-    id = 'p_' + Math.random().toString(36).slice(2,10) + Date.now().toString(36);
-    sessionStorage.setItem('shiritori_uid', id);
-  }
-  return id;
-}
-const MY_ID = getMyId();
-
-/* =========================================================
-   STATE
-   ========================================================= */
-let currentRoomId = null;
-let roomRef = null;
-let roomListener = null;
-let myName = '';
-let turnTimerInterval = null;
-
-const TURN_SECONDS = 30;
-
-/* =========================================================
-   HELPERS: screens
-   ========================================================= */
-function showScreen(id){
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-}
-
-/* =========================================================
-   HELPERS: kana normalization for shiritori rules
-   ========================================================= */
-const SMALL_TO_NORMAL = {
-  'ぁ':'あ','ぃ':'い','ぅ':'う','ぇ':'え','ぉ':'お',
-  'ゃ':'や','ゅ':'ゆ','ょ':'よ','っ':'つ','ゎ':'わ',
-  'ァ':'あ','ィ':'い','ゥ':'う','ェ':'え','ォ':'お',
-  'ャ':'や','ュ':'ゆ','ョ':'よ','ッ':'つ','ヮ':'わ'
-};
-
-function katakanaToHiragana(str){
-  return str.replace(/[\u30A1-\u30F6]/g, ch =>
-    String.fromCharCode(ch.charCodeAt(0) - 0x60)
-  );
-}
-
-function isValidKanaWord(str){
-  // only hiragana / katakana / long vowel mark, length >= 1
-  return /^[\u3041-\u3096\u30A1-\u30F6\u30FC]+$/.test(str);
-}
-
-function normalizeWord(str){
-  return katakanaToHiragana(str.trim());
-}
-
-function getFirstChar(normalized){
-  let c = normalized[0];
-  if(SMALL_TO_NORMAL[c]) c = SMALL_TO_NORMAL[c];
-  return c;
-}
-
-function getLastChar(normalized){
-  let s = normalized;
-  // strip trailing long-vowel marks, fall back to preceding vowel char (simplified)
-  let c = s[s.length - 1];
-  if(c === 'ー'){
-    // simplistic: just look at char before the mark
-    if(s.length > 1) c = s[s.length - 2];
-  }
-  if(SMALL_TO_NORMAL[c]) c = SMALL_TO_NORMAL[c];
-  return c;
-}
-
-function endsWithN(normalized){
-  let last = normalized[normalized.length - 1];
-  return last === 'ん' || last === 'ン' || last === 'ん';
-}
-
-/* =========================================================
-   ROOM CODE
-   ========================================================= */
-function generateRoomCode(){
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  let code = '';
-  for(let i=0;i<6;i++) code += chars[Math.floor(Math.random()*chars.length)];
-  return code;
-}
-
-/* =========================================================
-   CREATE / JOIN
-   ========================================================= */
-document.getElementById('btn-create').addEventListener('click', async () => {
-  const name = document.getElementById('name-input').value.trim();
-  const msg = document.getElementById('entry-msg');
-  if(!name){ msg.textContent = '名前を入力してください'; return; }
-  msg.textContent = '';
-  myName = name;
-
-  let code = generateRoomCode();
-  const roomData = {
-    hostId: MY_ID,
-    status: 'waiting',
-    createdAt: firebase.database.ServerValue.TIMESTAMP,
-    turnIndex: 0,
-    turnStartedAt: 0,
-    lastChar: '',
-    words: {},
-    players: {
-      [MY_ID]: { name: myName, order: 0, alive: true, joinedAt: firebase.database.ServerValue.TIMESTAMP }
-    }
+  /* ---------------- Firebase init ---------------- */
+  const firebaseConfig = {
+    apiKey: "AIzaSyCGkbyKm-ThFB-dA5aeFBAPmwB7aGE0bCE",
+    authDomain: "kmtpj-a8f92.firebaseapp.com",
+    databaseURL: "https://kmtpj-a8f92-default-rtdb.firebaseio.com",
+    projectId: "kmtpj-a8f92",
+    storageBucket: "kmtpj-a8f92.firebasestorage.app",
+    messagingSenderId: "79749146454",
+    appId: "1:79749146454:web:86c5f7cceb3f0b684858f7",
+    measurementId: "G-C13R4G84QW"
   };
-  try{
-    await db.ref('shiritoriRooms/' + code).set(roomData);
-    enterRoom(code);
-  }catch(e){
-    msg.textContent = '部屋の作成に失敗しました: ' + e.message;
-  }
-});
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+  const auth = firebase.auth();
 
-document.getElementById('btn-join').addEventListener('click', async () => {
-  const name = document.getElementById('name-input').value.trim();
-  const code = document.getElementById('join-input').value.trim().toUpperCase();
-  const msg = document.getElementById('entry-msg');
-  if(!name){ msg.textContent = '名前を入力してください'; return; }
-  if(!code){ msg.textContent = '部屋コードを入力してください'; return; }
-  msg.textContent = '';
-  myName = name;
+  /* ---------------- State ---------------- */
+  let uid = null;
+  let userName = "";
+  let roomId = "";
+  let roomRef = null;
+  let player = null;
+  let playerReady = false;
+  let pendingVideoId = null;
+  let isRemoteUpdate = false;
+  let lastKnownVideoId = null;
+  let listenersAttached = false;
 
-  try{
-    const snap = await db.ref('shiritoriRooms/' + code).get();
-    if(!snap.exists()){ msg.textContent = 'その部屋コードは見つかりませんでした'; return; }
-    const room = snap.val();
+  const $ = (sel) => document.querySelector(sel);
+  const homeScreen = $("#screen-home");
+  const roomScreen = $("#screen-room");
 
-    if(!room.players || !room.players[MY_ID]){
-      const order = room.players ? Object.keys(room.players).length : 0;
-      await db.ref(`shiritoriRooms/${code}/players/${MY_ID}`).set({
-        name: myName, order, alive: true, joinedAt: firebase.database.ServerValue.TIMESTAMP
-      });
+  /* ---------------- Auth ---------------- */
+  auth.signInAnonymously().catch(err=>{
+    $("#home-error").textContent = "認証エラー: " + err.message;
+  });
+  auth.onAuthStateChanged(user=>{
+    if(user){ uid = user.uid; }
+  });
+
+  /* ---------------- Home screen logic ---------------- */
+  const savedName = localStorage.getItem("wt_username");
+  if(savedName) $("#input-username").value = savedName;
+
+  $("#btn-random-id").addEventListener("click", ()=>{
+    const id = "room-" + Math.random().toString(36).slice(2,8);
+    $("#input-roomid").value = id;
+  });
+
+  function readHomeInputs(){
+    const name = $("#input-username").value.trim();
+    const rid = $("#input-roomid").value.trim();
+    $("#home-error").textContent = "";
+    if(!name){ $("#home-error").textContent = "ユーザーネームを入力してください"; return null; }
+    if(!rid){ $("#home-error").textContent = "ルームIDを入力してください"; return null; }
+    if(!/^[a-zA-Z0-9_\-ぁ-んァ-ヶ一-龠ー]{1,30}$/.test(rid)){
+      $("#home-error").textContent = "ルームIDに使えない文字が含まれています";
+      return null;
     }
-    enterRoom(code);
-  }catch(e){
-    msg.textContent = '参加に失敗しました: ' + e.message;
+    return {name, rid};
   }
-});
 
-/* =========================================================
-   ENTER ROOM / LISTENER
-   ========================================================= */
-function enterRoom(code){
-  currentRoomId = code;
-  if(roomRef && roomListener) roomRef.off('value', roomListener);
-  roomRef = db.ref('shiritoriRooms/' + code);
-  roomListener = roomRef.on('value', snap => {
-    const room = snap.val();
-    if(!room){ return; }
-    renderRoom(room);
-  });
-}
-
-function leaveRoomUI(){
-  if(roomRef && roomListener){ roomRef.off('value', roomListener); }
-  roomRef = null; roomListener = null; currentRoomId = null;
-  clearInterval(turnTimerInterval);
-  showScreen('screen-entry');
-}
-document.getElementById('btn-leave-lobby').addEventListener('click', leaveRoomUI);
-document.getElementById('btn-leave-result').addEventListener('click', leaveRoomUI);
-
-/* =========================================================
-   RENDER
-   ========================================================= */
-function renderRoom(room){
-  if(room.status === 'waiting'){
-    renderLobby(room);
-    showScreen('screen-lobby');
-  } else if(room.status === 'playing'){
-    renderGame(room);
-    showScreen('screen-game');
-  } else if(room.status === 'finished'){
-    renderResult(room);
-    clearInterval(turnTimerInterval);
-    showScreen('screen-result');
-  }
-}
-
-function playersSorted(room){
-  const players = room.players || {};
-  return Object.keys(players)
-    .map(id => ({ id, ...players[id] }))
-    .sort((a,b) => a.order - b.order);
-}
-
-function renderLobby(room){
-  document.getElementById('lobby-code').textContent = currentRoomId;
-  const list = document.getElementById('lobby-players');
-  list.innerHTML = '';
-  const players = playersSorted(room);
-  players.forEach(p => {
-    const li = document.createElement('li');
-    li.innerHTML = `<span>${escapeHtml(p.name)}${p.id===MY_ID ? '（あなた）' : ''}</span>`;
-    if(p.id === room.hostId){
-      const b = document.createElement('span');
-      b.className = 'badge host';
-      b.textContent = 'ホスト';
-      li.appendChild(b);
-    }
-    list.appendChild(li);
-  });
-
-  const startBtn = document.getElementById('btn-start');
-  const isHost = room.hostId === MY_ID;
-  startBtn.style.display = isHost ? 'block' : 'none';
-  startBtn.disabled = players.length < 2;
-  document.getElementById('lobby-msg').textContent = isHost
-    ? (players.length < 2 ? 'あと1人以上参加すると開始できます' : '')
-    : 'ホストの開始を待っています…';
-}
-
-document.getElementById('btn-start').addEventListener('click', async () => {
-  const snap = await roomRef.get();
-  const room = snap.val();
-  const players = playersSorted(room);
-  if(players.length < 2) return;
-  await roomRef.update({
-    status: 'playing',
-    turnIndex: 0,
-    turnStartedAt: firebase.database.ServerValue.TIMESTAMP,
-    lastChar: '',
-    words: {},
-    loserId: null,
-    winnerId: null
-  });
-  // ensure everyone marked alive at game start
-  const updates = {};
-  players.forEach(p => { updates[`players/${p.id}/alive`] = true; });
-  await roomRef.update(updates);
-});
-
-function wordsAsArray(room){
-  const w = room.words || {};
-  return Object.keys(w).map(k => ({ id:k, ...w[k] })).sort((a,b) => a.seq - b.seq);
-}
-
-function renderGame(room){
-  const players = playersSorted(room);
-  const alivePlayers = players.filter(p => p.alive !== false);
-  const turnPlayer = alivePlayers[room.turnIndex % alivePlayers.length];
-
-  // chain
-  const wrap = document.getElementById('chain-wrap');
-  const words = wordsAsArray(room);
-  if(words.length === 0){
-    wrap.innerHTML = '<div class="chain-empty">さいしょの言葉を入力してスタート！</div>';
-  } else {
-    wrap.innerHTML = '';
-    words.forEach((w, idx) => {
-      if(idx > 0){
-        const arrow = document.createElement('span');
-        arrow.className = 'link-arrow';
-        arrow.textContent = '→';
-        wrap.appendChild(arrow);
+  $("#btn-create-room").addEventListener("click", async ()=>{
+    const vals = readHomeInputs();
+    if(!vals) return;
+    await ensureAuth();
+    const ref = db.ref("rooms/" + vals.rid);
+    try{
+      const snap = await ref.once("value");
+      if(snap.exists()){
+        $("#home-error").textContent = "そのルームIDは既に使われています。参加するには「既存のルームに参加する」を押してください。";
+        return;
       }
-      const pill = document.createElement('span');
-      pill.className = 'word-pill';
-      pill.innerHTML = `${escapeHtml(w.word)}<span class="by">${escapeHtml(w.byName || '')}</span>`;
-      wrap.appendChild(pill);
+      await ref.set({
+        creatorUid: uid,
+        createdAt: firebase.database.ServerValue.TIMESTAMP
+      });
+      enterRoom(vals.name, vals.rid);
+    }catch(err){
+      $("#home-error").textContent = "作成に失敗しました: " + err.message;
+    }
+  });
+
+  $("#btn-join-room").addEventListener("click", async ()=>{
+    const vals = readHomeInputs();
+    if(!vals) return;
+    await ensureAuth();
+    const ref = db.ref("rooms/" + vals.rid);
+    try{
+      const snap = await ref.once("value");
+      if(!snap.exists()){
+        $("#home-error").textContent = "そのルームIDは見つかりませんでした。";
+        return;
+      }
+      enterRoom(vals.name, vals.rid);
+    }catch(err){
+      $("#home-error").textContent = "参加に失敗しました: " + err.message;
+    }
+  });
+
+  function ensureAuth(){
+    return new Promise((resolve)=>{
+      if(uid){ resolve(); return; }
+      const unsub = auth.onAuthStateChanged(user=>{
+        if(user){ uid = user.uid; unsub(); resolve(); }
+      });
     });
+  }
+
+  /* ---------------- Enter / leave room ---------------- */
+  function enterRoom(name, rid){
+    userName = name;
+    roomId = rid;
+    localStorage.setItem("wt_username", name);
+    roomRef = db.ref("rooms/" + rid);
+
+    homeScreen.classList.remove("active");
+    roomScreen.classList.add("active");
+    $("#room-title-id").textContent = rid;
+    $("#room-title-sub").textContent = "接続中...";
+
+    // presence
+    const userRef = roomRef.child("users/" + uid);
+    userRef.set({ name: userName, joinedAt: firebase.database.ServerValue.TIMESTAMP });
+    userRef.onDisconnect().remove();
+
+    attachRoomListeners();
+    postSystemMessageLocalOnly(userName + " さんが入室しました");
+  }
+
+  function leaveRoom(goingHome){
+    if(roomRef && uid){
+      roomRef.child("users/" + uid).remove();
+    }
+    detachRoomListeners();
+    roomScreen.classList.remove("active");
+    homeScreen.classList.add("active");
+    if(player && playerReady){ try{ player.stopVideo(); }catch(e){} }
+    $("#video-empty").style.display = "flex";
+    lastKnownVideoId = null;
+    if(goingHome !== false){ $("#home-error").textContent = ""; }
+  }
+
+  $("#btn-leave").addEventListener("click", ()=> leaveRoom());
+
+  $("#btn-delete-room").addEventListener("click", async ()=>{
+    if(!confirm("このルームを完全に削除します。チャット・動画情報・参加者情報がすべて消えます。よろしいですか？")) return;
+    try{
+      await roomRef.remove();
+      // remove() triggers the 'value' listener below for everyone including us
+    }catch(err){
+      alert("削除に失敗しました: " + err.message + "\n(作成者のみ削除できます)");
+    }
+  });
+
+  /* ---------------- Firebase listeners ---------------- */
+  let usersHandler, chatHandler, videoHandler, roomExistsHandler;
+
+  function attachRoomListeners(){
+    if(listenersAttached) return;
+    listenersAttached = true;
+
+    roomExistsHandler = roomRef.on("value", (snap)=>{
+      if(!snap.exists()){
+        alert("このルームは削除されました。");
+        leaveRoom();
+      }
+    });
+
+    usersHandler = roomRef.child("users").on("value", (snap)=>{
+      renderParticipants(snap.val() || {});
+    });
+
+    chatHandler = roomRef.child("chat").limitToLast(200).on("value", (snap)=>{
+      renderChat(snap.val() || {});
+    });
+
+    videoHandler = roomRef.child("video").on("value", (snap)=>{
+      const data = snap.val();
+      if(!data || !data.videoId) return;
+      applyRemoteVideo(data);
+    });
+  }
+
+  function detachRoomListeners(){
+    if(!listenersAttached) return;
+    listenersAttached = false;
+    if(roomExistsHandler) roomRef.off("value", roomExistsHandler);
+    if(usersHandler) roomRef.child("users").off("value", usersHandler);
+    if(chatHandler) roomRef.child("chat").off("value", chatHandler);
+    if(videoHandler) roomRef.child("video").off("value", videoHandler);
+  }
+
+  /* ---------------- Participants UI ---------------- */
+  function renderParticipants(users){
+    const wrap = $("#participants");
+    wrap.innerHTML = "";
+    const names = Object.values(users);
+    $("#room-title-sub").textContent = names.length + "人が視聴中";
+    names.forEach(u=>{
+      const chip = document.createElement("div");
+      chip.className = "chip";
+      const initial = (u.name || "?").trim().charAt(0).toUpperCase();
+      chip.innerHTML = '<span class="dot">' + escapeHtml(initial) + '</span><span>' + escapeHtml(u.name || "名無し") + '</span>';
+      wrap.appendChild(chip);
+    });
+  }
+
+  /* ---------------- Chat UI ---------------- */
+  function renderChat(chatObj){
+    const wrap = $("#chat-messages");
+    const wasNearBottom = (wrap.scrollHeight - wrap.scrollTop - wrap.clientHeight) < 80;
+    wrap.innerHTML = "";
+    const entries = Object.values(chatObj).sort((a,b)=> (a.time||0) - (b.time||0));
+    entries.forEach(m=>{
+      const div = document.createElement("div");
+      div.className = "msg" + (m.uid === uid ? " me" : "");
+      div.innerHTML = '<div class="name">' + escapeHtml(m.name || "名無し") + '</div><div class="text">' + escapeHtml(m.text || "") + '</div>';
+      wrap.appendChild(div);
+    });
+    if(wasNearBottom || entries.length <= 1) wrap.scrollTop = wrap.scrollHeight;
+  }
+
+  function postSystemMessageLocalOnly(text){
+    const wrap = $("#chat-messages");
+    const div = document.createElement("div");
+    div.className = "msg system";
+    div.innerHTML = '<div class="text">' + escapeHtml(text) + '</div>';
+    wrap.appendChild(div);
     wrap.scrollTop = wrap.scrollHeight;
   }
 
-  // turn banner + timer
-  const banner = document.getElementById('turn-banner');
-  const isMyTurn = turnPlayer && turnPlayer.id === MY_ID;
-  banner.className = 'turn-banner' + (isMyTurn ? ' mine' : '');
-  updateTurnBanner(room, turnPlayer, isMyTurn);
-  clearInterval(turnTimerInterval);
-  turnTimerInterval = setInterval(() => updateTurnBanner(room, turnPlayer, isMyTurn), 1000);
-
-  // input enable state
-  const input = document.getElementById('word-input');
-  const btn = document.getElementById('btn-submit');
-  input.disabled = !isMyTurn;
-  btn.disabled = !isMyTurn;
-  input.placeholder = isMyTurn
-    ? (room.lastChar ? `「${room.lastChar}」から始まる言葉` : 'さいしょの言葉を入力')
-    : `${turnPlayer ? turnPlayer.name : ''}さんの番です`;
-
-  // players list
-  const list = document.getElementById('game-players');
-  list.innerHTML = '';
-  players.forEach(p => {
-    const li = document.createElement('li');
-    const dead = p.alive === false;
-    li.className = (turnPlayer && p.id === turnPlayer.id && !dead ? 'turn ' : '') + (dead ? 'dead' : '');
-    li.innerHTML = `<span>${escapeHtml(p.name)}${p.id===MY_ID ? '（あなた）' : ''}</span>`;
-    if(dead){
-      const b = document.createElement('span'); b.className='badge'; b.style.background='var(--vermillion)'; b.textContent='脱落';
-      li.appendChild(b);
-    } else if(turnPlayer && p.id === turnPlayer.id){
-      const b = document.createElement('span'); b.className='badge turn'; b.textContent='番';
-      li.appendChild(b);
-    }
-    list.appendChild(li);
+  function sendChat(){
+    const input = $("#input-chat");
+    const text = input.value.trim();
+    if(!text) return;
+    roomRef.child("chat").push({
+      uid: uid,
+      name: userName,
+      text: text,
+      time: firebase.database.ServerValue.TIMESTAMP
+    });
+    input.value = "";
+  }
+  $("#btn-send-chat").addEventListener("click", sendChat);
+  $("#input-chat").addEventListener("keydown", (e)=>{
+    if(e.key === "Enter"){ e.preventDefault(); sendChat(); }
   });
-}
 
-function updateTurnBanner(room, turnPlayer, isMyTurn){
-  const banner = document.getElementById('turn-banner');
-  if(!turnPlayer){ banner.textContent = '進行中…'; return; }
-  const started = room.turnStartedAt || Date.now();
-  const remain = Math.max(0, TURN_SECONDS - Math.floor((Date.now() - started)/1000));
-  const who = isMyTurn ? 'あなたの番です' : `${turnPlayer.name} さんの番`;
-  banner.innerHTML = `${escapeHtml(who)}　<span class="timer">残り${remain}秒</span>`;
+  /* ---------------- Tabs ---------------- */
+  document.querySelectorAll(".tab").forEach(tab=>{
+    tab.addEventListener("click", ()=>{
+      document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
+      document.querySelectorAll(".panel").forEach(p=>p.classList.remove("active"));
+      tab.classList.add("active");
+      $("#panel-" + tab.dataset.tab).classList.add("active");
+    });
+  });
 
-  // if I'm the turn player and time's up, auto-eliminate (any client can also do this safely-ish)
-  if(remain <= 0 && turnPlayer.id === MY_ID){
-    handleTimeout();
-  }
-}
-
-function renderResult(room){
-  const players = playersSorted(room);
-  const winner = players.find(p => p.id === room.winnerId);
-  const title = document.getElementById('result-title');
-  const sub = document.getElementById('result-sub');
-  if(winner){
-    title.textContent = `🏆 ${winner.name} さんの勝ち！`;
-  } else {
-    title.textContent = 'ゲーム終了';
-  }
-  const loser = players.find(p => p.id === room.loserId);
-  sub.textContent = loser ? `${loser.name} さんが「ん」で終わる言葉を使って脱落しました` : '';
-
-  const isHost = room.hostId === MY_ID;
-  document.getElementById('btn-restart').style.display = isHost ? 'block' : 'none';
-}
-
-document.getElementById('btn-restart').addEventListener('click', async () => {
-  const snap = await roomRef.get();
-  const room = snap.val();
-  const players = playersSorted(room);
-  const updates = {
-    status: 'waiting',
-    turnIndex: 0,
-    turnStartedAt: 0,
-    lastChar: '',
-    words: {},
-    loserId: null,
-    winnerId: null
-  };
-  players.forEach(p => { updates[`players/${p.id}/alive`] = true; });
-  await roomRef.update(updates);
-});
-
-/* =========================================================
-   SUBMIT WORD
-   ========================================================= */
-document.getElementById('btn-submit').addEventListener('click', submitWord);
-document.getElementById('word-input').addEventListener('keydown', e => {
-  if(e.key === 'Enter') submitWord();
-});
-
-async function submitWord(){
-  const input = document.getElementById('word-input');
-  const msg = document.getElementById('game-msg');
-  const raw = input.value;
-  msg.textContent = '';
-  if(!raw || !raw.trim()){ return; }
-
-  const snap = await roomRef.get();
-  const room = snap.val();
-  if(!room || room.status !== 'playing') return;
-
-  const players = playersSorted(room);
-  const alivePlayers = players.filter(p => p.alive !== false);
-  const turnPlayer = alivePlayers[room.turnIndex % alivePlayers.length];
-  if(!turnPlayer || turnPlayer.id !== MY_ID){
-    msg.textContent = 'あなたの番ではありません';
-    return;
+  /* ---------------- YouTube video loading ---------------- */
+  function extractVideoId(url){
+    const m = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{6,15})/);
+    return m ? m[1] : null;
   }
 
-  const normalized = normalizeWord(raw);
-  if(!isValidKanaWord(normalized)){
-    msg.textContent = 'ひらがな・カタカナのみで入力してください';
-    return;
-  }
-
-  const words = wordsAsArray(room);
-  const usedSet = new Set(words.map(w => w.normalized));
-  if(usedSet.has(normalized)){
-    msg.textContent = 'その言葉はすでに使われています';
-    return;
-  }
-
-  if(room.lastChar){
-    const first = getFirstChar(normalized);
-    if(first !== room.lastChar){
-      msg.textContent = `「${room.lastChar}」から始まる言葉を入力してください`;
+  $("#btn-load-video").addEventListener("click", ()=>{
+    const url = $("#input-video-url").value.trim();
+    const vid = extractVideoId(url);
+    if(!vid){
+      alert("YouTubeのURLとして認識できませんでした。");
       return;
     }
+    roomRef.child("video").set({
+      videoId: vid,
+      state: {
+        status: "paused",
+        time: 0,
+        updatedAt: firebase.database.ServerValue.TIMESTAMP
+      }
+    });
+    $("#input-video-url").value = "";
+  });
+
+  $("#btn-resync").addEventListener("click", ()=>{
+    roomRef.child("video").once("value").then(snap=>{
+      const data = snap.val();
+      if(data && data.videoId) applyRemoteVideo(data, true);
+    });
+  });
+
+  function applyRemoteVideo(data, force){
+    $("#video-empty").style.display = "none";
+    $("#link-open-youtube").href = "https://www.youtube.com/watch?v=" + data.videoId;
+
+    if(!playerReady){
+      pendingVideoId = data;
+      return;
+    }
+
+    if(lastKnownVideoId !== data.videoId){
+      lastKnownVideoId = data.videoId;
+      isRemoteUpdate = true;
+      player.loadVideoById(data.videoId);
+      applyState(data.state);
+      setTimeout(()=>{ isRemoteUpdate = false; }, 1200);
+      return;
+    }
+
+    applyState(data.state, force);
   }
 
-  const seq = words.length;
-  const wordId = 'w' + seq + '_' + Date.now().toString(36);
-  const wentN = endsWithN(normalized);
+  function applyState(state, force){
+    if(!state || !playerReady) return;
+    const now = Date.now();
+    const elapsed = state.updatedAt ? (now - state.updatedAt) / 1000 : 0;
+    const target = state.status === "playing" ? state.time + Math.max(elapsed, 0) : state.time;
 
-  const updates = {};
-  updates[`words/${wordId}`] = {
-    word: raw.trim(),
-    normalized,
-    byId: MY_ID,
-    byName: turnPlayer.name,
-    seq
+    let current = 0;
+    try{ current = player.getCurrentTime() || 0; }catch(e){}
+
+    isRemoteUpdate = true;
+    if(force || Math.abs(current - target) > 1.5){
+      player.seekTo(target, true);
+    }
+    if(state.status === "playing"){
+      player.playVideo();
+    } else {
+      player.pauseVideo();
+    }
+    setTimeout(()=>{ isRemoteUpdate = false; }, 900);
+  }
+
+  function pushLocalState(status){
+    if(!roomRef || isRemoteUpdate) return;
+    let time = 0;
+    try{ time = player.getCurrentTime() || 0; }catch(e){}
+    roomRef.child("video/state").set({
+      status: status,
+      time: time,
+      updatedAt: firebase.database.ServerValue.TIMESTAMP
+    });
+  }
+
+  /* ---------------- YouTube IFrame API callbacks ---------------- */
+  window.onYouTubeIframeAPIReady = function(){
+    player = new YT.Player("player", {
+      height: "100%",
+      width: "100%",
+      playerVars: { playsinline: 1, rel: 0 },
+      events: {
+        onReady: ()=>{
+          playerReady = true;
+          if(pendingVideoId){
+            applyRemoteVideo(pendingVideoId);
+            pendingVideoId = null;
+          }
+        },
+        onStateChange: (e)=>{
+          if(isRemoteUpdate) return;
+          if(e.data === YT.PlayerState.PLAYING) pushLocalState("playing");
+          else if(e.data === YT.PlayerState.PAUSED) pushLocalState("paused");
+        }
+      }
+    });
   };
 
-  if(wentN){
-    // this player is eliminated
-    updates[`players/${MY_ID}/alive`] = false;
-    const remaining = alivePlayers.filter(p => p.id !== MY_ID);
-    if(remaining.length <= 1){
-      updates['status'] = 'finished';
-      updates['loserId'] = MY_ID;
-      updates['winnerId'] = remaining.length === 1 ? remaining[0].id : null;
-    } else {
-      // move to next alive player (indexes shift once this player is excluded)
-      updates['turnIndex'] = room.turnIndex % remaining.length;
-      updates['turnStartedAt'] = firebase.database.ServerValue.TIMESTAMP;
-      updates['lastChar'] = getLastChar(normalized);
-    }
-  } else {
-    const nextAliveCount = alivePlayers.length;
-    updates['turnIndex'] = (room.turnIndex + 1) % nextAliveCount;
-    updates['turnStartedAt'] = firebase.database.ServerValue.TIMESTAMP;
-    updates['lastChar'] = getLastChar(normalized);
+  /* ---------------- utils ---------------- */
+  function escapeHtml(str){
+    return String(str)
+      .replace(/&/g,"&amp;")
+      .replace(/</g,"&lt;")
+      .replace(/>/g,"&gt;")
+      .replace(/"/g,"&quot;")
+      .replace(/'/g,"&#039;");
   }
 
-  await roomRef.update(updates);
-  input.value = '';
-}
-
-async function handleTimeout(){
-  const snap = await roomRef.get();
-  const room = snap.val();
-  if(!room || room.status !== 'playing') return;
-  const players = playersSorted(room);
-  const alivePlayers = players.filter(p => p.alive !== false);
-  const turnPlayer = alivePlayers[room.turnIndex % alivePlayers.length];
-  if(!turnPlayer || turnPlayer.id !== MY_ID) return;
-
-  // double-check time really elapsed to avoid race
-  const started = room.turnStartedAt || Date.now();
-  if(Date.now() - started < TURN_SECONDS * 1000) return;
-
-  const updates = {};
-  updates[`players/${MY_ID}/alive`] = false;
-  const remaining = alivePlayers.filter(p => p.id !== MY_ID);
-  if(remaining.length <= 1){
-    updates['status'] = 'finished';
-    updates['loserId'] = MY_ID;
-    updates['winnerId'] = remaining.length === 1 ? remaining[0].id : null;
-  } else {
-    updates['turnIndex'] = room.turnIndex % remaining.length;
-    updates['turnStartedAt'] = firebase.database.ServerValue.TIMESTAMP;
-  }
-  await roomRef.update(updates);
-}
-
-/* =========================================================
-   UTIL
-   ========================================================= */
-function escapeHtml(str){
-  return String(str).replace(/[&<>"']/g, m => ({
-    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
-  }[m]));
-}
+})();
 </script>
 </body>
 </html>
