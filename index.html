@@ -102,6 +102,10 @@ function wipe(){
   try{document.cookie=`${KEY}=; max-age=0; path=/`}catch(e){}
   try{localStorage.removeItem(KEY)}catch(e){}
 }
+const BKEY=KEY+'-battle';
+function saveB(){try{localStorage.setItem(BKEY,JSON.stringify(B))}catch(e){}}
+function loadB(){try{const s=localStorage.getItem(BKEY);return s?JSON.parse(s):null}catch(e){return null}}
+function wipeB(){try{localStorage.removeItem(BKEY)}catch(e){}}
 const cnt=(m,t)=>m.pts.filter(s=>s===t).length;
 const dmgOf=m=>Math.round(10*cnt(m,'A')*(1+.5*(m.pts.length-1)))+atkBonus();
 const hpOf=()=>50+10*cnt(G.move,'H')+10*(G.bonusHp||0);
@@ -247,14 +251,15 @@ function battle(){
   save();show();
 }
 function challengeBattle(){
-  const hp=250+30*G.wins,dmg=25+3*G.wins,ph=hpOf();
-  B={n:'???',challenge:true,busy:false,log:['クソ強いモンスターがあらわれた!!'],e:{name:'超巨大ドラゴン',em:'🐲',type:'F',hp,max:hp,en:0,cost:1,dmg},p:{hp:ph,max:ph,en:1,shield:false}};
+  const hp=1200+80*G.wins,dmg=90+8*G.wins,ph=hpOf();
+  B={n:'???',challenge:true,busy:false,turn:0,log:['クソ強いモンスターがあらわれた!!'],e:{name:'超巨大ドラゴン',em:'🐲',type:'F',hp,max:hp,en:0,cost:1,dmg,shield:false},p:{hp:ph,max:ph,en:1,shield:false}};
   save();show();
 }
 function show(){
+  saveB();
   const {e,p}=B,m=G.move,k=m.pts.length;
   app.innerHTML=`<div class="fight">
-  <div class="card foe"><div class="em">${e.em}</div><b>Lv.${B.n} ${e.name} ${TYPES[e.type].e}</b>
+  <div class="card foe"><div class="em">${e.em}</div><b>Lv.${B.n} ${e.name} ${TYPES[e.type].e}</b>${e.shield?' 🛡':''}
     <div class="bar e" style="margin:6px 0"><i style="width:${Math.max(0,e.hp/e.max*100)}%"></i></div>
     <small>HP ${Math.max(0,e.hp)} ／ エネルギー ${e.en}/${e.cost} ／ 技: ${e.dmg}ダメージ</small></div>
   <ul class="log">${B.log.slice(-4).map(l=>`<li>${esc(l)}</li>`).join('')}</ul>
@@ -280,8 +285,15 @@ function show(){
     }
     if(b.id==='pass'){B.log.push('パスした');endTurn();return}
     if(b.id==='atk'&&B.p.en>=k){
-      B.p.en-=k;const d=Math.round(dmgOf(m)*adv(G.type,e.type));B.e.hp-=d;
-      B.log.push(`${G.name}の「${m.name}」! ${d}ダメージ${adv(G.type,e.type)>1?'(効果ばつぐん!)':adv(G.type,e.type)<1?'(いまひとつ)':''}`);endTurn();
+      B.p.en-=k;const d=Math.round(dmgOf(m)*adv(G.type,e.type));
+      if(e.shield){
+        e.shield=false;
+        B.log.push(`${G.name}の「${m.name}」! しかし${e.name}のシールドに防がれた`);
+      }else{
+        B.e.hp-=d;
+        B.log.push(`${G.name}の「${m.name}」! ${d}ダメージ${adv(G.type,e.type)>1?'(効果ばつぐん!)':adv(G.type,e.type)<1?'(いまひとつ)':''}`);
+      }
+      endTurn();
     }
   };
 }
@@ -289,7 +301,20 @@ function endTurn(){
   if(B.e.hp<=0){B.busy=true;show();return setTimeout(win,700)}
   B.busy=true;show();
   setTimeout(()=>{
-    const e=B.e;e.en++;
+    const e=B.e;B.turn=(B.turn||0)+1;
+    if(B.challenge){
+      if(B.turn%10===0){
+        const heal=Math.max(1,Math.round(e.max*0.08));
+        e.hp=Math.min(e.max,e.hp+heal);
+        B.log.push(`${e.name}は少し回復した(+${heal})`);
+      }
+      if(!e.shield&&Math.random()<0.25){
+        e.shield=true;
+        B.log.push(`${e.name}はシールドを構えた!`);
+        B.p.en=Math.min(G.move.pts.length,B.p.en+1);B.busy=false;show();return;
+      }
+    }
+    e.en++;
     if(e.en>=e.cost){
       e.en-=e.cost;
       const d=Math.round(e.dmg*adv(e.type,G.type));
@@ -301,7 +326,7 @@ function endTurn(){
   },650);
 }
 function win(){
-  G.kills=(G.kills||0)+1;
+  G.kills=(G.kills||0)+1;wipeB();
   app.onclick=null;
   if(B.challenge){
     const reward=200+20*G.wins;G.coins+=reward;save();submitScore();
@@ -318,11 +343,13 @@ function win(){
 }
 function lose(){
   const img=G.img,name=G.name,w=G.wins,docId=G.docId;
-  removeScore(docId);wipe();G=null;app.onclick=null;
+  removeScore(docId);wipe();wipeB();G=null;app.onclick=null;
   app.innerHTML=`<h1 class="center">カードが力尽きた…</h1><div class="card center dead"><img src="${img}" alt=""><h2 style="margin:8px 0 0">${esc(name)}</h2><p style="margin:4px 0"><small>撃破数 ${w} ／ このカードは失われた</small></p></div>
   <div class="row"><button class="big" id="re">最初から</button><button id="rk" style="width:100%">ランキングを見る</button></div>`;
   $('#re').onclick=draw;$('#rk').onclick=()=>ranking(()=>{G=null;draw()});
 }
-G=load();if(G){if(!G.type)G.type='F';if(G.bonusHp==null)G.bonusHp=0;if(G.bonusAtk==null)G.bonusAtk=0;if(!G.docId)G.docId=newId()}
-G?title():draw();
+G=load();if(G){if(!G.type)G.type='F';if(G.bonusHp==null)G.bonusHp=0;if(G.bonusAtk==null)G.bonusAtk=0;if(G.kills==null)G.kills=0;if(!G.docId)G.docId=newId()}
+B=G?loadB():null;
+if(B)B.busy=false; // 途中で止まっていたアニメーション待ちは解除する
+if(G&&B)show();else if(G)title();else draw();
 </script></body></html>
