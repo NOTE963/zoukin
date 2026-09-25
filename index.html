@@ -71,7 +71,8 @@ try{
 }catch(e){fbReady=false}
 
 const app=document.getElementById('app'),$=s=>document.querySelector(s);
-const KEY='blankcard-v8';
+const KEY='blankcard-v9';
+const newId=()=>(crypto.randomUUID?crypto.randomUUID():'id'+Date.now()+Math.random().toString(16).slice(2));
 const TYPES={F:{n:'ほのお',e:'🔥',beats:'G'},W:{n:'みず',e:'💧',beats:'F'},G:{n:'くさ',e:'🌿',beats:'W'}};
 const FOES=[['ムシ','🐛','G'],['ゴブリン','👺','F'],['コウモリ','🦇','W'],['オバケ','👻','G'],['ロボ','🤖','F'],['オオカミ','🐺','W'],['タコ','🐙','W'],['ドクロ','💀','G'],['ドラゴン','🐉','F'],['デーモン','😈','F']];
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -118,7 +119,7 @@ function draw(){
   $('#go').onclick=()=>{
     const name=$('#nm').value.trim();
     if(!name){$('#nm').focus();return}
-    G={name,img:cv.toDataURL('image/png'),type,max:2,wins:0,coins:0,shield:0,bonusHp:0,bonusAtk:0,move:{name:'',pts:['A']}};
+    G={name,img:cv.toDataURL('image/png'),type,max:2,wins:0,coins:0,shield:0,bonusHp:0,bonusAtk:0,docId:newId(),move:{name:'',pts:['A']}};
     save();moves();
   };
 }
@@ -187,8 +188,12 @@ async function ranking(back){
   }catch(e){app.innerHTML=`<h1>ランキング</h1><p><small>読み込みに失敗しました。</small></p><button class="big" id="back">もどる</button>`;$('#back').onclick=back;}
 }
 function submitScore(){
-  if(!db||!fbReady)return;
-  db.collection('cards').add({name:G.name,type:G.type,wins:G.wins,power:growth(),ts:Date.now()}).catch(()=>{});
+  if(!db||!fbReady||!firebase.auth().currentUser)return;
+  db.collection('cards').doc(G.docId).set({name:G.name,type:G.type,wins:G.wins,power:growth(),uid:firebase.auth().currentUser.uid,ts:Date.now()}).catch(()=>{});
+}
+function removeScore(docId){
+  if(!db||!fbReady||!docId)return;
+  db.collection('cards').doc(docId).delete().catch(()=>{});
 }
 
 function battle(){
@@ -255,12 +260,12 @@ function win(){
   $('#nx').onclick=moves;$('#sh').onclick=shop;
 }
 function lose(){
-  const img=G.img,name=G.name,w=G.wins;
-  submitScore();wipe();G=null;app.onclick=null;
+  const img=G.img,name=G.name,w=G.wins,docId=G.docId;
+  removeScore(docId);wipe();G=null;app.onclick=null;
   app.innerHTML=`<h1 class="center">カードが力尽きた…</h1><div class="card center dead"><img src="${img}" alt=""><h2 style="margin:8px 0 0">${esc(name)}</h2><p style="margin:4px 0"><small>撃破数 ${w} ／ このカードは失われた</small></p></div>
   <div class="row"><button class="big" id="re">最初から</button><button id="rk" style="width:100%">ランキングを見る</button></div>`;
   $('#re').onclick=draw;$('#rk').onclick=()=>ranking(()=>{G=null;draw()});
 }
-G=load();if(G){if(!G.type)G.type='F';if(G.bonusHp==null)G.bonusHp=0;if(G.bonusAtk==null)G.bonusAtk=0}
+G=load();if(G){if(!G.type)G.type='F';if(G.bonusHp==null)G.bonusHp=0;if(G.bonusAtk==null)G.bonusAtk=0;if(!G.docId)G.docId=newId()}
 G?title():draw();
 </script></body></html>
