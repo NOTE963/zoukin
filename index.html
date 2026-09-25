@@ -251,8 +251,9 @@ function battle(){
   save();show();
 }
 function challengeBattle(){
-  const hp=1200+80*G.wins,dmg=90+8*G.wins,ph=hpOf();
-  B={n:'???',challenge:true,busy:false,turn:0,log:['クソ強いモンスターがあらわれた!!'],e:{name:'超巨大ドラゴン',em:'🐲',type:'F',hp,max:hp,en:0,cost:1,dmg,shield:false},p:{hp:ph,max:ph,en:1,shield:false}};
+  const k=G.kills||0,hp=800+120*k,dmg=60+10*k,ph=hpOf();
+  const shieldChance=Math.min(.6,.15+.03*k),healEvery=Math.max(4,10-Math.floor(k/3)),healPct=Math.min(.2,.06+.01*k);
+  B={n:'???',challenge:true,busy:false,turn:0,shieldChance,healEvery,healPct,log:['クソ強いモンスターがあらわれた!!'],e:{name:'超巨大ドラゴン',em:'🐲',type:'F',hp,max:hp,en:0,cost:1,dmg,shield:false},p:{hp:ph,max:ph,en:1,shield:false}};
   save();show();
 }
 function show(){
@@ -303,12 +304,12 @@ function endTurn(){
   setTimeout(()=>{
     const e=B.e;B.turn=(B.turn||0)+1;
     if(B.challenge){
-      if(B.turn%10===0){
-        const heal=Math.max(1,Math.round(e.max*0.08));
+      if(B.turn%(B.healEvery||10)===0){
+        const heal=Math.max(1,Math.round(e.max*(B.healPct||.08)));
         e.hp=Math.min(e.max,e.hp+heal);
         B.log.push(`${e.name}は少し回復した(+${heal})`);
       }
-      if(!e.shield&&Math.random()<0.25){
+      if(!e.shield&&Math.random()<(B.shieldChance!=null?B.shieldChance:.25)){
         e.shield=true;
         B.log.push(`${e.name}はシールドを構えた!`);
         B.p.en=Math.min(G.move.pts.length,B.p.en+1);B.busy=false;show();return;
@@ -326,9 +327,10 @@ function endTurn(){
   },650);
 }
 function win(){
-  G.kills=(G.kills||0)+1;wipeB();
+  wipeB();
   app.onclick=null;
   if(B.challenge){
+    G.kills=(G.kills||0)+1;
     const reward=200+20*G.wins;G.coins+=reward;save();submitScore();
     app.innerHTML=`<h1 class="center">挑戦モード勝利!!</h1><div class="card center"><img src="${G.img}" alt=""><h2 style="margin:8px 0 0">${esc(G.name)}</h2>
     <p style="margin:4px 0">クソ強いモンスターを倒した! ／ <span class="coin">🪙+${reward}</span></p><p style="margin:0"><small>討伐数 ${G.kills}</small></p></div>
