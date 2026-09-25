@@ -71,7 +71,7 @@ try{
 }catch(e){fbReady=false}
 
 const app=document.getElementById('app'),$=s=>document.querySelector(s);
-const KEY='blankcard-v5';
+const KEY='blankcard-v6';
 const TYPES={F:{n:'ほのお',e:'🔥',beats:'G'},W:{n:'みず',e:'💧',beats:'F'},G:{n:'くさ',e:'🌿',beats:'W'}};
 const FOES=[['ムシ','🐛','G'],['ゴブリン','👺','F'],['コウモリ','🦇','W'],['オバケ','👻','G'],['ロボ','🤖','F'],['オオカミ','🐺','W'],['タコ','🐙','W'],['ドクロ','💀','G'],['ドラゴン','🐉','F'],['デーモン','😈','F']];
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -80,9 +80,11 @@ function save(){try{localStorage.setItem(KEY,JSON.stringify(G))}catch(e){}}
 function load(){try{const s=localStorage.getItem(KEY);return s?JSON.parse(s):null}catch(e){return null}}
 function wipe(){try{localStorage.removeItem(KEY)}catch(e){}}
 const cnt=(m,t)=>m.pts.filter(s=>s===t).length;
-const dmgOf=m=>Math.round(10*cnt(m,'A')*(1+.5*(m.pts.length-1)));
-const hpOf=()=>50+10*cnt(G.move,'H');
-const growth=()=>G.max*20+dmgOf(G.move)*2+(hpOf()-50)+G.wins*15;
+const dmgOf=m=>Math.round(10*cnt(m,'A')*(1+.5*(m.pts.length-1)))+atkBonus();
+const hpOf=()=>50+10*cnt(G.move,'H')+10*(G.bonusHp||0);
+const atkBonus=()=>10*(G.bonusAtk||0);
+const growth=()=>G.max*20+dmgOf(G.move)*2+(hpOf()-50)+G.wins*15+atkBonus()*2;
+const itemCost=n=>10+n*5;
 const adv=(atkT,defT)=>TYPES[atkT].beats===defT?1.5:(TYPES[defT].beats===atkT?0.67:1);
 
 function title(){
@@ -116,7 +118,7 @@ function draw(){
   $('#go').onclick=()=>{
     const name=$('#nm').value.trim();
     if(!name){$('#nm').focus();return}
-    G={name,img:cv.toDataURL('image/png'),type,max:2,wins:0,coins:0,shield:0,move:{name:'',pts:['A']}};
+    G={name,img:cv.toDataURL('image/png'),type,max:2,wins:0,coins:0,shield:0,bonusHp:0,bonusAtk:0,move:{name:'',pts:['A']}};
     save();moves();
   };
 }
@@ -150,7 +152,10 @@ function moves(){
 
 function nav(){return `<div class="row" style="margin-top:14px"><button id="navHome" style="width:100%">🏠 ホーム</button></div>`;}
 function shop(){
+  const hpCost=itemCost(G.bonusHp),atkCost=itemCost(G.bonusAtk);
   const items=[
+    {id:'hp',n:'HPアップ',d:`カードの最大HPが永久に+10(現在+${10*G.bonusHp})`,cost:hpCost},
+    {id:'atk',n:'攻撃アップ',d:`技のダメージが永久に+10(現在+${10*G.bonusAtk})`,cost:atkCost},
     {id:'heal',n:'回復薬',d:'次のバトル開始時、HP全回復',cost:15},
     {id:'shield',n:'シールド',d:'次のバトルで1回だけ攻撃を防ぐ',cost:20},
   ];
@@ -164,6 +169,8 @@ function shop(){
     G.coins-=cost;
     if(b.dataset.i==='shield')G.shield++;
     else if(b.dataset.i==='heal')G.potion=(G.potion||0)+1;
+    else if(b.dataset.i==='hp')G.bonusHp=(G.bonusHp||0)+1;
+    else if(b.dataset.i==='atk')G.bonusAtk=(G.bonusAtk||0)+1;
     save();shop();
   };
 }
@@ -244,5 +251,6 @@ function lose(){
   <div class="row"><button class="big" id="re">最初から</button><button id="rk" style="width:100%">ランキングを見る</button></div>`;
   $('#re').onclick=draw;$('#rk').onclick=()=>ranking(()=>{G=null;draw()});
 }
-G=load();if(G&&!G.type)G.type='F';G?title():draw();
+G=load();if(G){if(!G.type)G.type='F';if(G.bonusHp==null)G.bonusHp=0;if(G.bonusAtk==null)G.bonusAtk=0}
+G?title():draw();
 </script></body></html>
