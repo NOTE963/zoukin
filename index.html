@@ -1,9 +1,11 @@
 <!DOCTYPE html>
-<html lang="ja"><head><meta charset="utf-8">
+<html lang="ja">
+<head>
+<meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>勉強で領土拡大</title>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
@@ -15,14 +17,14 @@ body{background:var(--bg);color:var(--tx);font-family:system-ui,-apple-system,"H
 #top{display:flex;gap:8px;padding:8px}
 #top div{flex:1;background:var(--card);border-radius:14px;padding:8px 10px;font-size:11px;color:var(--sub);box-shadow:0 1px 4px #0002}
 #top b{display:block;font-size:19px;color:var(--tx)}#top b small{font-size:11px;color:var(--sub)}
-.pg{display:none;flex:1;min-height:0;position:relative;overflow:auto;padding:12px}
-.pg.on{display:block}
+.pg{display:none;flex:1;min-height:0;position:relative;overflow:auto;padding:12px}.pg.on{display:block}
 #pgmap{padding:0;overflow:hidden}#map{position:absolute;inset:0}
 #msg{position:absolute;left:8px;right:8px;bottom:56px;z-index:1000;text-align:center;font-size:13px;background:var(--card);color:var(--tx);border-radius:10px;padding:6px 8px;box-shadow:0 1px 4px #0003;pointer-events:none}
 #bulk{position:absolute;right:8px;bottom:8px;z-index:1000}
 nav{display:flex;background:var(--card);border-top:1px solid var(--bd);padding-bottom:env(safe-area-inset-bottom,0px)}
 nav button{flex:1;background:none;color:var(--sub);border-radius:0;padding:8px 2px;font-size:11px;min-width:0}
-nav svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;display:block;margin:0 auto 2px}nav button.on{color:var(--ac);font-weight:700}
+nav svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;display:block;margin:0 auto 2px}
+nav button.on{color:var(--ac);font-weight:700}
 button{font:inherit;font-size:14px;border:0;border-radius:12px;padding:10px 14px;background:var(--ac);color:#fff;cursor:pointer}
 button.sec{background:var(--card);color:var(--tx);border:1px solid var(--bd)}button:disabled{opacity:.4}
 .card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:14px;margin-bottom:12px}
@@ -35,32 +37,36 @@ input[type=text]{font:inherit;width:100%;padding:10px;border-radius:10px;border:
 .row{display:flex;gap:8px}.row>*{flex:1}
 .badge{width:72px;height:72px;margin:0 auto;border-radius:50%;border:3px solid var(--ac);display:flex;align-items:center;justify-content:center;font-size:40px;font-weight:700;color:var(--ac)}
 .lb{display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;line-height:1;text-shadow:0 0 3px #000a,0 1px 2px #000a;pointer-events:none}
-.mk{width:30px;height:30px;border-radius:50%;background:var(--card);color:var(--ac);border:2px solid var(--ac);display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:700;box-shadow:0 1px 4px #0004}
-.rk button{flex:1}.rk .sec{opacity:.8}
 .ri{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:8px 10px;margin-bottom:8px;cursor:pointer}
 .ri.me{border-color:var(--ac)}.ri .n{width:26px;text-align:center;font-weight:700;color:var(--sub)}
 .sb{width:34px;height:34px;border-radius:50%;border:2px solid var(--ac);display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--ac);flex:0 0 auto}
 .ri .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ri .v{font-size:13px;color:var(--sub);text-align:right}
 #vb{position:absolute;left:50%;top:8px;transform:translateX(-50%);z-index:1000;background:var(--card);color:var(--tx);border-radius:12px;padding:6px 8px 6px 12px;box-shadow:0 1px 4px #0003;display:none;align-items:center;gap:8px;font-size:13px;max-width:80%}
 #vb button{padding:4px 10px;font-size:12px}
-</style></head><body>
+#online{font-size:10px;text-align:center;color:var(--sub);padding:0 8px 4px}
+</style>
+</head>
+<body>
 <div id="top">
  <div>自分の領地<b><span id="area">0</span> <small>km²</small></b></div>
  <div>コイン<b id="coin">0</b></div>
  <div>陸軍 / 海軍<b><span id="tl">0</span> / <span id="ts">0</span></b></div>
 </div>
+<div id="online">Firebase未接続</div>
 
-<div class="pg on" id="pgmap"><div id="map"></div><div id="msg"></div><div id="vb"><span id="vbt"></span><button id="vbx" class="sec">閉じる</button></div><button id="bulk">まとめて攻める×10</button></div>
+<div class="pg on" id="pgmap">
+ <div id="map"></div><div id="msg"></div>
+ <div id="vb"><span id="vbt"></span><button id="vbx" class="sec">閉じる</button></div>
+ <button id="bulk">まとめて攻める×10</button>
+</div>
 
 <div class="pg" id="pgearn">
  <div class="card c">
-  <div class="sub">スマホを<b>画面を下にして</b>置いている間だけ計測します</div>
-  <div class="big" id="clk">00:00</div>
-  <div id="st">待機中</div>
-  <button id="go" style="width:100%">計測を開始</button>
-  <p class="sub" id="rate"></p>
+  <div class="sub">スマホを画面を下にして置いている間だけ計測します</div>
+  <div class="big" id="clk">00:00</div><div id="st">待機中</div>
+  <button id="go" style="width:100%">計測を開始</button><p class="sub" id="rate"></p>
  </div>
- <div class="card sub">・計測中は画面が消えないようにしています。<br>・伏せると計測開始、持ち上げると一時停止します。<br>・1分ごとにコインがもらえます。<br>・iPhoneは開始時にモーションの許可が必要です。</div>
+ <div class="card sub">・計測中は画面が消えないようにします（対応ブラウザのみ）。<br>・伏せると計測開始、持ち上げると一時停止します。<br>・勉強時間1分ごとにコインがもらえます。<br>・端末やブラウザによってはモーションセンサーが使えない場合があります。</div>
  <div class="card c">総勉強時間 <b id="total">0</b> 分　<span class="sub">（今日の計測 <span id="sess">0</span> 分）</span></div>
 </div>
 
@@ -73,11 +79,14 @@ input[type=text]{font:inherit;width:100%;padding:10px;border-radius:10px;border:
   <p>陸軍 <b id="nl">0</b>　海軍 <b id="ns">0</b></p>
   <div class="row"><button id="bl1" class="sec">陸軍×1　20コイン</button><button id="bl5" class="sec">陸軍×5　100コイン</button></div>
   <div class="row" style="margin-top:8px"><button id="bs1" class="sec">海軍×1　30コイン</button><button id="bs5" class="sec">海軍×5　150コイン</button></div></div>
-<div class="card"><b>国を消去</b><p class="sub">領土・コイン・兵力・勉強時間・国名など、すべてのデータを削除して最初からやり直します。元に戻せません。</p><button id="wipe" class="sec" style="width:100%;color:#d33;border-color:#d33">国を消去する</button></div>
+ <div class="card"><b>国を消去</b><p class="sub">領土・コイン・兵力・勉強時間・国名など、すべてのデータを削除します。元に戻せません。</p><button id="wipe" class="sec" style="width:100%;color:#d33;border-color:#d33">国を消去する</button></div>
 </div>
 
-<div class="pg" id="pgrank"><div class="row rk" style="margin-bottom:10px"><button id="rk1">領地ランキング</button><button id="rk2" class="sec">勉強時間</button></div>
- <div id="rinfo" class="sub c" style="margin-bottom:8px"></div><div id="rlist"></div><p class="sub c">タップするとその国の領地を地図で見られます</p></div>
+<div class="pg" id="pgrank">
+ <div class="row rk" style="margin-bottom:10px"><button id="rk1">領地ランキング</button><button id="rk2" class="sec">勉強時間</button></div>
+ <div id="rinfo" class="sub c" style="margin-bottom:8px">ログイン後にランキングを読み込みます</div>
+ <div id="rlist"></div><p class="sub c">タップするとその国の領土を地図で見られます</p>
+</div>
 
 <nav>
  <button data-t="map" class="on"><svg viewBox="0 0 24 24"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2zM9 4v14M15 6v14"/></svg>領地</button>
@@ -85,114 +94,444 @@ input[type=text]{font:inherit;width:100%;padding:10px;border-radius:10px;border:
  <button data-t="nation"><svg viewBox="0 0 24 24"><path d="M5 21V4M5 4h13l-3 4 3 4H5"/></svg>国</button>
  <button data-t="rank"><svg viewBox="0 0 24 24"><path d="M7 4h10v5a5 5 0 0 1-10 0zM7 6H4a3 3 0 0 0 3 4M17 6h3a3 3 0 0 1-3 4M12 14v4M8 21h8"/></svg>ランキング</button>
 </nav>
+
 <script>
-const KEY='terrMap1',R=10000,SQ=Math.sqrt(3),PR=L.Projection.SphericalMercator,$=id=>document.getElementById(id);
-let S={coin:0,troop:0,land:0,sea:0,seaK:[],mins:0,secs:0,own:[],cap:null,name:'名もなき国',icon:'国',view:null};
-try{const d=JSON.parse(localStorage.getItem(KEY));if(d&&d.own)S=Object.assign(S,d)}catch(e){}
-S.secs=S.secs||(S.mins*60);if(S.troop){S.land+=S.troop;S.troop=0}
-const SEAK=new Set(S.seaK||[]);
-const own=new Set(S.own);
-let uid=null,db=null,syncT=null,OTH=null;
-const save=()=>{S.own=[...own];S.seaK=[...SEAK];try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}cloud()};
-const map=L.map('map').setView(S.view?S.view.c:[35.68,139.76],S.view?S.view.z:9);
-L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,attribution:'&copy; OpenStreetMap contributors'}).addTo(map);
-const rend=L.canvas({padding:.5}),gOwn=L.layerGroup().addTo(map),gFr=L.layerGroup().addTo(map);let capMk=null;
-const hc=(q,r)=>[R*SQ*(q+r/2),R*1.5*r];
-function corners(q,r,s=1){const[x,y]=hc(q,r),o=[];for(let i=0;i<6;i++){const a=Math.PI/180*(60*i-30);o.push(PR.unproject(L.point(x+s*R*Math.cos(a),y+s*R*Math.sin(a))))}return o}
-function ll2hex(ll){const p=PR.project(ll),r0=p.y/(R*1.5),q0=p.x/(R*SQ)-r0/2,s0=-q0-r0;let q=Math.round(q0),r=Math.round(r0),s=Math.round(s0);const dq=Math.abs(q-q0),dr=Math.abs(r-r0),ds=Math.abs(s-s0);if(dq>dr&&dq>ds)q=-r-s;else if(dr>ds)r=-q-s;return[q,r]}
+/* Firebase設定：Firebase Consoleのウェブアプリ設定に置き換えてください */
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+  databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
+  projectId: "YOUR_PROJECT_ID",
+  appId: "YOUR_APP_ID"
+};
+
+const KEY = "terrMap1";
+const R = 10000, SQ = Math.sqrt(3), PR = L.Projection.SphericalMercator;
+const $ = id => document.getElementById(id);
+
+let S = {coin:0,troop:0,land:0,sea:0,seaK:[],mins:0,secs:0,own:[],cap:null,name:"名もなき国",icon:"国",view:null};
+try {
+  const d = JSON.parse(localStorage.getItem(KEY));
+  if (d && d.own) S = Object.assign(S,d);
+} catch(e) {}
+S.secs = Number(S.secs || (S.mins || 0) * 60);
+if (S.troop) { S.land += S.troop; S.troop = 0; }
+
+const SEAK = new Set(Array.isArray(S.seaK) ? S.seaK : []);
+const own = new Set(Array.isArray(S.own) ? S.own : []);
+let uid = null, syncT = null, OTH = null, cloudReady = false;
+let auth = null, db = null;
+
+const map = L.map("map").setView(S.view ? S.view.c : [35.68,139.76], S.view ? S.view.z : 9);
+L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:18,attribution:"&copy; OpenStreetMap contributors"}).addTo(map);
+const rend = L.canvas({padding:.5}), gOwn = L.layerGroup().addTo(map), gFr = L.layerGroup().addTo(map);
+const gLbl = L.layerGroup().addTo(map), gOth = L.layerGroup().addTo(map), gOthL = L.layerGroup().addTo(map);
+
+const hc = (q,r) => [R*SQ*(q+r/2), R*1.5*r];
+function corners(q,r,s=1) {
+  const [x,y] = hc(q,r), o = [];
+  for (let i=0;i<6;i++) {
+    const a = Math.PI/180*(60*i-30);
+    o.push(PR.unproject(L.point(x+s*R*Math.cos(a),y+s*R*Math.sin(a))));
+  }
+  return o;
+}
+function ll2hex(ll) {
+  const p=PR.project(ll), r0=p.y/(R*1.5), q0=p.x/(R*SQ)-r0/2, s0=-q0-r0;
+  let q=Math.round(q0),r=Math.round(r0),s=Math.round(s0);
+  const dq=Math.abs(q-q0),dr=Math.abs(r-r0),ds=Math.abs(s-s0);
+  if(dq>dr&&dq>ds) q=-r-s; else if(dr>ds) r=-q-s;
+  return [q,r];
+}
 const NB=[[1,0],[-1,0],[0,1],[0,-1],[1,-1],[-1,1]];
-const defn=()=>1+Math.floor(own.size/25),cost=()=>5*defn(),mult=()=>1+Math.min(own.size,300)*.002;
-const tcache=new Map(),typ=new Map();
-function tile(z,x,y){const k=z+'/'+x+'/'+y;if(!tcache.has(k))tcache.set(k,new Promise(res=>{const im=new Image();im.crossOrigin='anonymous';im.onload=()=>{const c=document.createElement('canvas');c.width=c.height=256;const g=c.getContext('2d',{willReadFrequently:true});g.drawImage(im,0,0);res(g)};im.onerror=()=>res(null);im.src='https://tile.openstreetmap.org/'+k+'.png'}));return tcache.get(k)}
-async function water(ll){const z=9,n=1<<z,lat=Math.max(-85,Math.min(85,ll.lat))*Math.PI/180;let fx=(ll.lng+180)/360*n;fx=((fx%n)+n)%n;const fy=(1-Math.log(Math.tan(lat)+1/Math.cos(lat))/Math.PI)/2*n;
- const g=await tile(z,Math.floor(fx),Math.floor(fy));if(!g)return null;try{const d=g.getImageData(Math.floor((fx%1)*256),Math.floor((fy%1)*256),1,1).data;return Math.abs(d[0]-170)<14&&Math.abs(d[1]-211)<14&&Math.abs(d[2]-223)<14}catch(e){return null}}
-async function classify(q,r){const k=q+','+r;if(SEAK.has(k))return 'sea';if(typ.has(k))return typ.get(k);const[x,y]=hc(q,r);let w=0,tot=0;
- for(const[dx,dy]of[[0,0],[.4,0],[-.4,0],[0,.4],[0,-.4]]){const v=await water(PR.unproject(L.point(x+dx*R,y+dy*R)));if(v===null)continue;tot++;if(v)w++}
- const t=tot&&w/tot>=.6?'sea':'land';typ.set(k,t);return t}
-function addHex(q,r){const sea=SEAK.has(q+','+r),h=sea?205:140+((q*7+r*13)%40);L.polygon(corners(q,r,.97),{renderer:rend,interactive:false,stroke:false,fillColor:`hsl(${h},75%,${42+((q+r)%3)*5}%)`,fillOpacity:.78}).addTo(gOwn)}
+const defn=()=>1+Math.floor(own.size/25), cost=()=>5*defn(), mult=()=>1+Math.min(own.size,300)*.002;
+const tcache=new Map(), typ=new Map();
 
-function frontier(){const f=new Set();own.forEach(k=>{const[q,r]=k.split(',').map(Number);NB.forEach(([a,b])=>{const n=(q+a)+','+(r+b);if(!own.has(n))f.add(n)})});return f}
+function tile(z,x,y) {
+  const k=z+"/"+x+"/"+y;
+  if(!tcache.has(k)) tcache.set(k,new Promise(res=>{
+    const im=new Image(); im.crossOrigin="anonymous";
+    im.onload=()=>{const c=document.createElement("canvas");c.width=c.height=256;const g=c.getContext("2d",{willReadFrequently:true});g.drawImage(im,0,0);res(g);};
+    im.onerror=()=>res(null);
+    im.src="https://tile.openstreetmap.org/"+k+".png";
+  }));
+  return tcache.get(k);
+}
+async function water(ll) {
+  const z=9,n=1<<z,lat=Math.max(-85,Math.min(85,ll.lat))*Math.PI/180;
+  let fx=(ll.lng+180)/360*n; fx=((fx%n)+n)%n;
+  const fy=(1-Math.log(Math.tan(lat)+1/Math.cos(lat))/Math.PI)/2*n;
+  const g=await tile(z,Math.floor(fx),Math.floor(fy));
+  if(!g)return null;
+  try {
+    const d=g.getImageData(Math.floor((fx%1)*256),Math.floor((fy%1)*256),1,1).data;
+    return Math.abs(d[0]-170)<14&&Math.abs(d[1]-211)<14&&Math.abs(d[2]-223)<14;
+  } catch(e) { return null; }
+}
+async function classify(q,r) {
+  const k=q+","+r;
+  if(SEAK.has(k))return "sea";
+  if(typ.has(k))return typ.get(k);
+  const [x,y]=hc(q,r); let w=0,tot=0;
+  for(const [dx,dy] of [[0,0],[.4,0],[-.4,0],[0,.4],[0,-.4]]) {
+    const v=await water(PR.unproject(L.point(x+dx*R,y+dy*R)));
+    if(v===null)continue; tot++; if(v)w++;
+  }
+  const t=tot&&w/tot>=.6?"sea":"land"; typ.set(k,t); return t;
+}
+function addHex(q,r,layer=gOwn,color) {
+  const sea=SEAK.has(q+","+r);
+  L.polygon(corners(q,r,.97),{
+    renderer:rend,interactive:false,stroke:false,
+    fillColor:color || (sea?"#0891b2":"#26965c"),fillOpacity:.78
+  }).addTo(layer);
+}
+function frontier() {
+  const f=new Set();
+  own.forEach(k=>{
+    const [q,r]=k.split(",").map(Number);
+    NB.forEach(([a,b])=>{const n=(q+a)+","+(r+b);if(!own.has(n))f.add(n);});
+  });
+  return f;
+}
 let gen=0;
-function drawFr(){labels();const my=++gen;gFr.clearLayers();if(map.getZoom()<8||!own.size)return;[...frontier()].forEach(async k=>{const[q,r]=k.split(',').map(Number),t=await classify(q,r);if(my!==gen)return;
- L.polygon(corners(q,r,.95),{renderer:rend,interactive:false,color:t=='sea'?'#0891b2':'#2563eb',weight:1,dashArray:t=='sea'?'1 4':'3 3',fill:false}).addTo(gFr)})}
+function drawFr() {
+  labels(); const my=++gen; gFr.clearLayers();
+  if(map.getZoom()<8||!own.size)return;
+  [...frontier()].forEach(async k=>{
+    const [q,r]=k.split(",").map(Number),t=await classify(q,r);
+    if(my!==gen)return;
+    L.polygon(corners(q,r,.95),{renderer:rend,interactive:false,color:t==="sea"?"#0891b2":"#2563eb",weight:1,dashArray:t==="sea"?"1 4":"3 3",fill:false}).addTo(gFr);
+  });
+}
+function area() {
+  let a=0;
+  own.forEach(k=>{
+    const [q,r]=k.split(",").map(Number), lat=PR.unproject(L.point(0,hc(q,r)[1])).lat*Math.PI/180;
+    a+=2.598*R*R*Math.cos(lat)**2/1e6;
+  });
+  return a;
+}
+function labels() {
+  gLbl.clearLayers(); const z=map.getZoom(); if(z<7||!own.size)return;
+  const px=Math.round(R*SQ/(156543.03/Math.pow(2,z))),fs=Math.max(8,Math.min(56,px*.55));
+  own.forEach(k=>{
+    const [q,r]=k.split(",").map(Number),[x,y]=hc(q,r);
+    L.marker(PR.unproject(L.point(x,y)),{interactive:false,keyboard:false,icon:L.divIcon({className:"",html:`<div class="lb" style="font-size:${fs}px;width:${px}px;height:${px}px">${escapeHTML(S.icon)}</div>`,iconSize:[px,px],iconAnchor:[px/2,px/2]})}).addTo(gLbl);
+  });
+}
+function labelsOth() {
+  gOthL.clearLayers(); const z=map.getZoom(); if(!OTH||z<7)return;
+  const px=Math.round(R*SQ/(156543.03/Math.pow(2,z))),fs=Math.max(8,Math.min(56,px*.55));
+  OTH.keys.forEach(k=>{
+    const [q,r]=k.split(",").map(Number),[x,y]=hc(q,r);
+    L.marker(PR.unproject(L.point(x,y)),{interactive:false,keyboard:false,icon:L.divIcon({className:"",html:`<div class="lb" style="font-size:${fs}px;width:${px}px;height:${px}px">${escapeHTML(OTH.icon||"国")}</div>`,iconSize:[px,px],iconAnchor:[px/2,px/2]})}).addTo(gOthL);
+  });
+}
+function escapeHTML(s) {
+  return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+const fmt=n=>Number(n).toLocaleString("ja",{maximumFractionDigits:1});
+function ui() {
+  const a=fmt(area());
+  $("area").textContent=a; $("coin").textContent=S.coin;
+  $("tl").textContent=S.land; $("ts").textContent=S.sea;
+  $("rate").textContent=`1分=${(10*mult()).toFixed(1)}コイン（領土ボーナス込み）`;
+  $("bulk").disabled=!own.size;
+  $("flag").textContent=S.icon; $("nname").textContent=S.name;
+  $("nland").textContent=own.size; $("narea").textContent=a;
+  $("nl").textContent=S.land; $("ns").textContent=S.sea; $("nd").textContent=defn();
+  $("total").textContent=Math.floor(S.secs/60); $("sess").textContent=Math.floor(sess/60);
+  $("bl1").disabled=S.coin<20; $("bl5").disabled=S.coin<100;
+  $("bs1").disabled=S.coin<30; $("bs5").disabled=S.coin<150;
+  document.querySelectorAll("#icons button").forEach(b=>b.classList.toggle("on",b.textContent===S.icon));
+}
+const msg=t=>$("msg").textContent=t;
 
-function area(){let a=0;own.forEach(k=>{const[q,r]=k.split(',').map(Number),lat=PR.unproject(L.point(0,hc(q,r)[1])).lat*Math.PI/180;a+=2.598*R*R*Math.cos(lat)**2/1e6});return a}
-const gLbl=L.layerGroup().addTo(map);
-function labels(){gLbl.clearLayers();const z=map.getZoom();if(z<7||!own.size)return;
- const px=Math.round(R*SQ/(156543.03/Math.pow(2,z))),fs=Math.max(8,Math.min(56,px*.55));
- own.forEach(k=>{const[q,r]=k.split(',').map(Number),[x,y]=hc(q,r);
-  L.marker(PR.unproject(L.point(x,y)),{interactive:false,keyboard:false,icon:L.divIcon({className:'',html:`<div class="lb" style="font-size:${fs}px;width:${px}px;height:${px}px">${S.icon}</div>`,iconSize:[px,px],iconAnchor:[px/2,px/2]})}).addTo(gLbl)})}
-const gOth=L.layerGroup().addTo(map),gOthL=L.layerGroup().addTo(map);
-function labelsOth(){gOthL.clearLayers();const z=map.getZoom();if(!OTH||z<7)return;
- const px=Math.round(R*SQ/(156543.03/Math.pow(2,z))),fs=Math.max(8,Math.min(56,px*.55));
- OTH.keys.forEach(k=>{const[q,r]=k.split(',').map(Number),[x,y]=hc(q,r);
-  L.marker(PR.unproject(L.point(x,y)),{interactive:false,keyboard:false,icon:L.divIcon({className:'',html:`<div class="lb" style="font-size:${fs}px;width:${px}px;height:${px}px"></div>`,iconSize:[px,px],iconAnchor:[px/2,px/2]})}).addTo(gOthL)})
- gOthL.eachLayer(m=>{});}
-const capMark=labels;
-const fmt=n=>n.toLocaleString('ja',{maximumFractionDigits:1});
-function ui(){const a=fmt(area());$('area').textContent=a;$('coin').textContent=S.coin;$('tl').textContent=S.land;$('ts').textContent=S.sea;
- $('rate').textContent=`1分=${(10*mult()).toFixed(1)}コイン（領土ボーナス込み）`;$('bulk').disabled=!own.size;
- $('flag').textContent=S.icon;$('nname').textContent=S.name;$('nland').textContent=own.size;$('narea').textContent=a;$('nl').textContent=S.land;$('ns').textContent=S.sea;$('nd').textContent=defn();
- $('total').textContent=Math.floor(S.secs/60);$('sess').textContent=Math.floor(sess/60);
- $('bl1').disabled=S.coin<20;$('bl5').disabled=S.coin<100;$('bs1').disabled=S.coin<30;$('bs5').disabled=S.coin<150;
- document.querySelectorAll('#icons button').forEach(b=>b.classList.toggle('on',b.textContent==S.icon))}
-const msg=t=>$('msg').textContent=t;
-async function conquer(q,r){const k=q+','+r,t=await classify(q,r),d=defn(),c=cost(),key=t=='sea'?'sea':'land',nm=t=='sea'?'海軍':'陸軍';
- if(S[key]<d){msg(`${nm}が足りません（必要${d}）。国タブで雇えます`);return false}
- if(S.coin<c){msg(`コインが足りません（必要${c}）`);return false}
- S.coin-=c;own.add(k);if(t=='sea')SEAK.add(k);addHex(q,r);return true}
+function publicPayload() {
+  return {
+    name:String(S.name||"名もなき国").slice(0,12),
+    icon:String(S.icon||"国").slice(0,2),
+    landCount:own.size,
+    mins:Math.floor(Number(S.secs||0)/60),
+    own:[...own],
+    seaK:[...SEAK],
+    updatedAt: firebase.database.ServerValue.TIMESTAMP
+  };
+}
+function cloud() {
+  if(!uid||!db||!cloudReady)return;
+  clearTimeout(syncT);
+  syncT=setTimeout(async()=>{
+    S.own=[...own]; S.seaK=[...SEAK];
+    try {
+      await Promise.all([
+        db.ref("users/"+uid+"/game").set({...S,own:[...own],seaK:[...SEAK]}),
+        db.ref("publicPlayers/"+uid).set(publicPayload())
+      ]);
+      $("online").textContent="Firebase接続中・データ同期済み";
+    } catch(e) {
+      console.error("Firebase保存エラー",e);
+      $("online").textContent="保存エラー："+e.message;
+    }
+  },450);
+}
+function save() {
+  S.own=[...own]; S.seaK=[...SEAK];
+  try { localStorage.setItem(KEY,JSON.stringify(S)); } catch(e) {}
+  cloud();
+}
+
 let busy=false;
-map.on('click',async e=>{if(busy)return;busy=true;try{const[q,r]=ll2hex(e.latlng),k=q+','+r;
- if(!own.size){msg('地形を調べています…');if(await classify(q,r)=='sea')return msg('陸地をタップしてください');
-  const ks=[[q,r],...NB.map(([a,b])=>[q+a,r+b])];for(const[a,b]of ks){if(await classify(a,b)=='sea')SEAK.add(a+','+b);own.add(a+','+b)}
-  own.forEach(x=>{const[a,b]=x.split(',').map(Number);addHex(a,b)});S.cap=k;map.setView(e.latlng,Math.max(map.getZoom(),9));msg('建国！「稼ぐ」タブで勉強してコインを貯めよう');save();ui();drawFr();return}
- if(own.has(k))return msg('自分の領土です');
- if(!frontier().has(k))return msg('隣接したマスだけ攻められます');
- if(await conquer(q,r)){msg('領土を獲得！');save();ui();drawFr()}}finally{busy=false}});
-map.on('zoomend',()=>{drawFr();S.view={c:[map.getCenter().lat,map.getCenter().lng],z:map.getZoom()};save()});
-$('bulk').onclick=async()=>{if(busy)return;busy=true;$('bulk').disabled=true;msg('攻めています…');let n=0,tries=0,why='';
- while(n<10&&tries<40){tries++;const f=[...frontier()];if(!f.length)break;const k=f[Math.floor(Math.random()*f.length)].split(',').map(Number),t=await classify(...k);
-  if(S.coin<cost()){why='コインが足りません';break}
-  if(S[t=='sea'?'sea':'land']<defn()){why=(t=='sea'?'海軍':'陸軍')+'が足りません';continue}
-  if(await conquer(...k))n++}
- msg(n?`${n}マス獲得！`:(why||'攻められません'));save();ui();drawFr();$('bulk').disabled=false;busy=false};
-// タブ
-document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('on',x==b));
- document.querySelectorAll('.pg').forEach(p=>p.classList.toggle('on',p.id=='pg'+b.dataset.t));if(b.dataset.t=='map')setTimeout(()=>map.invalidateSize(),50);ui()});
-// 国
-['国','王','龍','虎','鷹','狼','桜','星','炎','冠','城','剣'].forEach(i=>{const b=document.createElement('button');b.textContent=i;b.onclick=()=>{S.icon=i;save();capMark();ui()};$('icons').appendChild(b)});
-$('nm').value=S.name;
-$('icok').onclick=()=>{const c=[...$('ic').value.trim()][0];if(c){S.icon=c;$('ic').value='';save();capMark();ui()}};
-$('nmok').onclick=()=>{const v=$('nm').value.trim();if(v){S.name=v;save();ui()}};
-const buy=(key,n,c)=>{if(S.coin>=c){S.coin-=c;S[key]+=n;save();ui()}};
-$('bl1').onclick=()=>buy('land',1,20);$('bl5').onclick=()=>buy('land',5,100);$('bs1').onclick=()=>buy('sea',1,30);$('bs5').onclick=()=>buy('sea',5,150);
-// 稼ぐ：画面を下にして置いている間だけ計測
+map.on("click",async e=>{
+  if(busy)return; busy=true;
+  try {
+    const [q,r]=ll2hex(e.latlng),k=q+","+r;
+    if(!own.size) {
+      msg("地形を調べています…");
+      if(await classify(q,r)==="sea"){msg("陸地をタップしてください");return;}
+      const ks=[[q,r],...NB.map(([a,b])=>[q+a,r+b])];
+      for(const [a,b] of ks) {
+        if(await classify(a,b)==="sea")SEAK.add(a+","+b);
+        own.add(a+","+b);
+      }
+      own.forEach(x=>{const [a,b]=x.split(",").map(Number);addHex(a,b);});
+      S.cap=k; map.setView(e.latlng,Math.max(map.getZoom(),9));
+      msg("建国！「稼ぐ」タブで勉強してコインを貯めよう");
+      save(); ui(); drawFr(); return;
+    }
+    if(own.has(k)){msg("自分の領土です");return;}
+    if(!frontier().has(k)){msg("隣接したマスだけ攻められます");return;}
+    if(await conquer(q,r)){msg("領土を獲得！");save();ui();drawFr();}
+  } finally {busy=false;}
+});
+async function conquer(q,r) {
+  const k=q+","+r,t=await classify(q,r),d=defn(),c=cost(),key=t==="sea"?"sea":"land",nm=t==="sea"?"海軍":"陸軍";
+  if(S[key]<d){msg(`${nm}が足りません（必要${d}）。国タブで雇えます`);return false;}
+  if(S.coin<c){msg(`コインが足りません（必要${c}）`);return false;}
+  S.coin-=c; own.add(k); if(t==="sea")SEAK.add(k);
+  addHex(q,r); return true;
+}
+$("bulk").onclick=async()=>{
+  if(busy)return; busy=true; $("bulk").disabled=true; msg("攻めています…");
+  let n=0,tries=0,why="";
+  while(n<10&&tries<40) {
+    tries++; const f=[...frontier()]; if(!f.length)break;
+    const k=f[Math.floor(Math.random()*f.length)].split(",").map(Number),t=await classify(...k);
+    if(S.coin<cost()){why="コインが足りません";break;}
+    if(S[t==="sea"?"sea":"land"]<defn()){why=(t==="sea"?"海軍":"陸軍")+"が足りません";continue;}
+    if(await conquer(...k))n++;
+  }
+  msg(n?`${n}マス獲得！`:(why||"攻められません"));
+  save();ui();drawFr();$("bulk").disabled=false;busy=false;
+};
+
+document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{
+  document.querySelectorAll("nav button").forEach(x=>x.classList.toggle("on",x===b));
+  document.querySelectorAll(".pg").forEach(p=>p.classList.toggle("on",p.id==="pg"+b.dataset.t));
+  if(b.dataset.t==="map")setTimeout(()=>map.invalidateSize(),50);
+  if(b.dataset.t==="rank")loadRanking(rankMode);
+  ui();
+});
+
+["国","王","龍","虎","鷹","狼","桜","星","炎","冠","城","剣"].forEach(i=>{
+  const b=document.createElement("button"); b.textContent=i;
+  b.onclick=()=>{S.icon=i;save();labels();ui();};
+  $("icons").appendChild(b);
+});
+$("nm").value=S.name;
+$("icok").onclick=()=>{const c=[...$("ic").value.trim()][0];if(c){S.icon=c;$("ic").value="";save();labels();ui();}};
+$("nmok").onclick=()=>{const v=$("nm").value.trim();if(v){S.name=v;save();ui();}};
+const buy=(key,n,c)=>{if(S.coin>=c){S.coin-=c;S[key]+=n;save();ui();}};
+$("bl1").onclick=()=>buy("land",1,20); $("bl5").onclick=()=>buy("land",5,100);
+$("bs1").onclick=()=>buy("sea",1,30); $("bs5").onclick=()=>buy("sea",5,150);
+
 let run=false,fd=false,lastEv=0,lastMot=0,last=Date.now(),sess=0,wl=null,hasEv=false,t0=0;
 const IOS=/iPhone|iPad|iPod/.test(navigator.userAgent);
-function onOri(e){if(e.beta==null||Date.now()-lastMot<2000)return;hasEv=true;lastEv=Date.now();fd=Math.abs(e.beta)>150&&Math.abs(e.gamma)<40}
-function onMot(e){const a=e.accelerationIncludingGravity;if(!a||a.z==null)return;hasEv=true;lastEv=lastMot=Date.now();const z=IOS?-a.z:a.z;fd=z<-7&&Math.abs(a.x)<4&&Math.abs(a.y)<4}
-function status(){if(!run)return $('st').textContent='待機中';
- $('st').textContent=(!hasEv&&Date.now()-t0>3000)?'センサーが使えません（HTTPSで開いてください）':fd?'計測中':'一時停止中：画面を下にして置いてね'}
-function tick(){const now=Date.now(),d=Math.min((now-last)/1000,3600);last=now;
- if(run){const live=fd&&(document.hidden||now-lastEv<4000);
-  if(live){S.secs+=d;sess+=d;let got=0;while(Math.floor(S.secs/60)>S.mins){S.mins++;const c=Math.round(10*mult());S.coin+=c;got+=c}
-   if(got){msg(`${got}コイン獲得！`);save()}}
-  ui()}
- $('clk').textContent=String(Math.floor(sess/60)).padStart(2,'0')+':'+String(Math.floor(sess%60)).padStart(2,'0');status()}
-async function lock(){try{if(navigator.wakeLock&&run)wl=await navigator.wakeLock.request('screen')}catch(e){}}
-$('go').onclick=async()=>{
- if(!run){
-  for(const E of[window.DeviceMotionEvent,window.DeviceOrientationEvent]){try{if(E&&E.requestPermission)await E.requestPermission()}catch(e){}}
-  addEventListener('devicemotion',onMot);addEventListener('deviceorientation',onOri);run=true;sess=0;fd=false;hasEv=false;t0=Date.now();last=Date.now();lock();$('go').textContent='計測を終了'}
- else{run=false;removeEventListener('devicemotion',onMot);removeEventListener('deviceorientation',onOri);try{wl&&wl.release()}catch(e){}wl=null;save();$('go').textContent='計測を開始';msg(`お疲れさま！${Math.floor(sess/60)}分勉強しました`)}
- tick()};
+function onOri(e) {
+  if(e.beta==null||Date.now()-lastMot<2000)return;
+  hasEv=true; lastEv=Date.now(); fd=Math.abs(e.beta)>150&&Math.abs(e.gamma)<40;
+}
+function onMot(e) {
+  const a=e.accelerationIncludingGravity; if(!a||a.z==null)return;
+  hasEv=true;lastEv=lastMot=Date.now();
+  const z=IOS?-a.z:a.z;
+  fd=z<-7&&Math.abs(a.x)<4&&Math.abs(a.y)<4;
+}
+function status() {
+  if(!run){$("st").textContent="待機中";return;}
+  $("st").textContent=(!hasEv&&Date.now()-t0>3000)?"センサーが使えません（HTTPSで開いてください）":fd?"計測中":"一時停止中：画面を下にして置いてね";
+}
+function tick() {
+  const now=Date.now(),d=Math.min((now-last)/1000,3600);last=now;
+  if(run) {
+    const live=fd&&(document.hidden||now-lastEv<4000);
+    if(live) {
+      S.secs+=d;sess+=d;let got=0;
+      while(Math.floor(S.secs/60)>S.mins) {
+        S.mins++;const c=Math.round(10*mult());S.coin+=c;got+=c;
+      }
+      if(got){msg(`${got}コイン獲得！`);save();}
+    }
+    ui();
+  }
+  $("clk").textContent=String(Math.floor(sess/60)).padStart(2,"0")+":"+String(Math.floor(sess%60)).padStart(2,"0");
+  status();
+}
+async function lock() {
+  try {if(navigator.wakeLock&&run)wl=await navigator.wakeLock.request("screen");}catch(e){}
+}
+$("go").onclick=async()=>{
+  if(!run) {
+    for(const E of [window.DeviceMotionEvent,window.DeviceOrientationEvent]) {
+      try {if(E&&E.requestPermission)await E.requestPermission();}catch(e){}
+    }
+    addEventListener("devicemotion",onMot);addEventListener("deviceorientation",onOri);
+    run=true;sess=0;fd=false;hasEv=false;t0=Date.now();last=Date.now();lock();
+    $("go").textContent="計測を終了";
+  } else {
+    run=false;removeEventListener("devicemotion",onMot);removeEventListener("deviceorientation",onOri);
+    try {if(wl)await wl.release();}catch(e){} wl=null;save();
+    $("go").textContent="計測を開始";
+    msg(`お疲れさま！${Math.floor(sess/60)}分勉強しました`);
+  }
+  tick();
+};
 setInterval(tick,1000);
-document.addEventListener('visibilitychange',()=>{if(!document.hidden)lock()});
+document.addEventListener("visibilitychange",()=>{if(!document.hidden)lock();});
 
-$('reset')&&0;
-$('wipe').onclick=()=>{if(!confirm('国を消去しますか？すべてのデータが削除され、元に戻せません。'))return;if(!confirm('本当に消去しますか？'))return;
- run=false;try{localStorage.removeItem(KEY)}catch(e){}location.reload()};
-own.forEach(k=>{const[q,r]=k.split(',').map(Number);addHex(q,r)});
-capMark();ui();drawFr();clk();
-if(!own.size)msg('地図を拡大して、出発地点をタップしよう');
-</script></body></html>
+function showRankCountry(p) {
+  const keys=Array.isArray(p.own)?p.own:Object.values(p.own||{});
+  const seaKeys=new Set(Array.isArray(p.seaK)?p.seaK:Object.values(p.seaK||{}));
+  OTH={keys,icon:p.icon,name:p.name};
+  gOth.clearLayers();gOthL.clearLayers();
+  keys.forEach(k=>{
+    const [q,r]=k.split(",").map(Number);
+    L.polygon(corners(q,r,.97),{renderer:rend,color:"#f59e0b",weight:1,fillColor:seaKeys.has(k)?"#0891b2":"#f59e0b",fillOpacity:.7}).addTo(gOth);
+  });
+  labelsOth();
+  document.querySelector('[data-t="map"]').click();
+  if(keys.length) {
+    const [q,r]=keys[0].split(",").map(Number),[x,y]=hc(q,r);
+    map.setView(PR.unproject(L.point(x,y)),Math.max(map.getZoom(),9));
+  }
+  msg(p.name+" の領土を表示中");
+}
+
+let rankMode="land";
+async function loadRanking(mode=rankMode) {
+  rankMode=mode;
+  if(!db||!uid){$("rinfo").textContent="ログイン中です。少し待ってください";return;}
+  $("rinfo").textContent="ランキング読み込み中…";$("rlist").innerHTML="";
+  try {
+    const snap=await db.ref("publicPlayers").once("value");
+    const players=[];
+    snap.forEach(child=>{
+      const p=child.val()||{};
+      players.push({
+        uid:child.key,name:p.name||"名無し",icon:p.icon||"国",
+        landCount:Number(p.landCount||0),mins:Number(p.mins||0),
+        own:Array.isArray(p.own)?p.own:Object.values(p.own||{}),
+        seaK:Array.isArray(p.seaK)?p.seaK:Object.values(p.seaK||{})
+      });
+    });
+    players.sort((a,b)=>mode==="land"?(b.landCount-a.landCount):(b.mins-a.mins));
+    $("rinfo").textContent="参加国数："+players.length+"か国（上位50か国）";
+    players.slice(0,50).forEach((p,index)=>{
+      const item=document.createElement("div");item.className="ri";
+      if(p.uid===uid)item.classList.add("me");
+      const rank=document.createElement("div");rank.className="n";rank.textContent=index+1;
+      const icon=document.createElement("div");icon.className="sb";icon.textContent=p.icon;
+      const name=document.createElement("div");name.className="nm";name.textContent=p.name+(p.uid===uid?"（自分）":"");
+      const value=document.createElement("div");value.className="v";
+      value.textContent=mode==="land"?p.landCount+" マス":p.mins+" 分";
+      item.append(rank,icon,name,value);item.onclick=()=>showRankCountry(p);
+      $("rlist").appendChild(item);
+    });
+    if(!players.length)$("rinfo").textContent="まだ参加国がありません";
+  } catch(e) {
+    console.error("ランキング取得エラー",e);
+    $("rinfo").textContent="ランキング取得に失敗しました。Firebaseルールを確認してください";
+  }
+}
+$("rk1").onclick=()=>{$("rk1").classList.remove("sec");$("rk2").classList.add("sec");loadRanking("land");};
+$("rk2").onclick=()=>{$("rk2").classList.remove("sec");$("rk1").classList.add("sec");loadRanking("time");};
+
+$("wipe").onclick=async()=>{
+  if(!confirm("国を消去しますか？すべてのデータが削除され、元に戻せません。"))return;
+  if(!confirm("本当に消去しますか？"))return;
+  run=false;
+  try {
+    if(uid&&db) {
+      await Promise.all([
+        db.ref("users/"+uid).remove(),
+        db.ref("publicPlayers/"+uid).remove()
+      ]);
+    }
+    localStorage.removeItem(KEY);
+    location.reload();
+  } catch(e) {
+    alert("Firebase上のデータを削除できませんでした。"+e.message);
+  }
+};
+
+map.on("zoomend",()=>{
+  drawFr();labelsOth();
+  S.view={c:[map.getCenter().lat,map.getCenter().lng],z:map.getZoom()};
+  try{localStorage.setItem(KEY,JSON.stringify({...S,own:[...own],seaK:[...SEAK]}));}catch(e){}
+});
+
+own.forEach(k=>{const [q,r]=k.split(",").map(Number);addHex(q,r);});
+$("nm").value=S.name;
+ui();drawFr();tick();
+if(!own.size)msg("地図を拡大して、出発地点をタップしよう");
+
+/* Firebase匿名認証・クラウド同期 */
+const configMissing=Object.values(firebaseConfig).some(v=>String(v).includes("YOUR_"));
+if(configMissing) {
+  $("online").textContent="Firebase設定待ち：firebaseConfigを入力してください";
+  msg("Firebase設定を入力するとオンラインランキングが使えます");
+} else {
+  try {
+    if(!firebase.apps.length)firebase.initializeApp(firebaseConfig);
+    auth=firebase.auth();db=firebase.database();
+    auth.onAuthStateChanged(async user=>{
+      if(!user) return;
+      uid=user.uid;
+      $("online").textContent="匿名ログイン済み・データ確認中";
+      try {
+        const snap=await db.ref("users/"+uid+"/game").once("value");
+        if(snap.exists()) {
+          const remote=snap.val()||{};
+          S=Object.assign(S,remote);
+          own.clear();
+          (Array.isArray(S.own)?S.own:Object.values(S.own||{})).forEach(k=>own.add(k));
+          SEAK.clear();
+          (Array.isArray(S.seaK)?S.seaK:Object.values(S.seaK||{})).forEach(k=>SEAK.add(k));
+          gOwn.clearLayers();
+          own.forEach(k=>{const [q,r]=k.split(",").map(Number);addHex(q,r);});
+          $("nm").value=S.name||"名もなき国";
+          if(S.view&&S.view.c)map.setView(S.view.c,S.view.z||9);
+        }
+        cloudReady=true;
+        save();
+        ui();drawFr();
+        $("online").textContent="Firebase接続中・匿名ログイン済み";
+        if(document.getElementById("pgrank").classList.contains("on"))loadRanking(rankMode);
+      } catch(e) {
+        console.error("初期同期エラー",e);
+        $("online").textContent="Firebase読み込みエラー："+e.message;
+      }
+    });
+    auth.signInAnonymously().catch(e=>{
+      console.error("匿名ログインエラー",e);
+      $("online").textContent="匿名ログイン失敗："+e.message;
+    });
+  } catch(e) {
+    console.error(e);
+    $("online").textContent="Firebase初期化エラー："+e.message;
+  }
+}
+</script>
+</body>
+</html>
