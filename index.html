@@ -1,243 +1,201 @@
 <!DOCTYPE html>
-<html lang="ja"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>勉強で領土拡大</title>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>そっくり描きゲーム</title>
 <style>
-:root{--bg:#f4f1ea;--card:#fff;--tx:#222;--sub:#777;--ac:#2563eb;--bd:#ddd}
-@media(prefers-color-scheme:dark){:root{--bg:#15181a;--card:#222629;--tx:#eee;--sub:#9aa;--ac:#4f8bff;--bd:#3a3f42}}
-*{box-sizing:border-box}html,body{height:100%;margin:0}
-body{background:var(--bg);color:var(--tx);font-family:system-ui,-apple-system,"Hiragino Sans",sans-serif;display:flex;flex-direction:column;overflow:hidden;padding-top:env(safe-area-inset-top,0px)}
-#top{display:flex;gap:8px;padding:8px}
-#top div{flex:1;background:var(--card);border-radius:14px;padding:8px 10px;font-size:11px;color:var(--sub);box-shadow:0 1px 4px #0002}
-#top b{display:block;font-size:19px;color:var(--tx)}#top b small{font-size:11px;color:var(--sub)}
-.pg{display:none;flex:1;min-height:0;position:relative;overflow:auto;padding:12px}
-.pg.on{display:block}
-#pgmap{padding:0;overflow:hidden}#map{position:absolute;inset:0}
-#msg{position:absolute;left:8px;right:8px;bottom:56px;z-index:1000;text-align:center;font-size:13px;background:var(--card);color:var(--tx);border-radius:10px;padding:6px 8px;box-shadow:0 1px 4px #0003;pointer-events:none}
-#bulk{position:absolute;right:8px;bottom:8px;z-index:1000}
-nav{display:flex;background:var(--card);border-top:1px solid var(--bd);padding-bottom:env(safe-area-inset-bottom,0px)}
-nav button{flex:1;background:none;color:var(--sub);border-radius:0;padding:8px 2px;font-size:11px;min-width:0}
-nav svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;display:block;margin:0 auto 2px}nav button.on{color:var(--ac);font-weight:700}
-button{font:inherit;font-size:14px;border:0;border-radius:12px;padding:10px 14px;background:var(--ac);color:#fff;cursor:pointer}
-button.sec{background:var(--card);color:var(--tx);border:1px solid var(--bd)}button:disabled{opacity:.4}
+:root{color-scheme:light dark;--bg:#f6f5f1;--card:#fff;--tx:#222;--ac:#e8590c;--mu:#888;--bd:#ddd}
+@media(prefers-color-scheme:dark){:root{--bg:#1c1c1e;--card:#2a2a2d;--tx:#eee;--bd:#444}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:system-ui,-apple-system,"Hiragino Sans",sans-serif;padding:12px}
+#app{max-width:460px;margin:0 auto}
+h1{font-size:1.3rem;text-align:center;margin:8px 0 12px}
 .card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:14px;margin-bottom:12px}
-.big{font-size:52px;text-align:center;font-variant-numeric:tabular-nums;margin:8px 0}
-.c{text-align:center}small,.sub{color:var(--sub);font-size:12px}
-#st{font-size:16px;margin:6px 0 12px}
-#icons{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin:8px 0}
-#icons button{font-size:20px;font-weight:700;padding:6px;background:var(--bg);border:2px solid transparent}#icons button.on{border-color:var(--ac)}
-input[type=text]{font:inherit;width:100%;padding:10px;border-radius:10px;border:1px solid var(--bd);background:var(--bg);color:var(--tx)}
-.row{display:flex;gap:8px}.row>*{flex:1}
-.badge{width:72px;height:72px;margin:0 auto;border-radius:50%;border:3px solid var(--ac);display:flex;align-items:center;justify-content:center;font-size:40px;font-weight:700;color:var(--ac)}
-.lb{display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;line-height:1;text-shadow:0 0 3px #000a,0 1px 2px #000a;pointer-events:none}
-.mk{width:30px;height:30px;border-radius:50%;background:var(--card);color:var(--ac);border:2px solid var(--ac);display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:700;box-shadow:0 1px 4px #0004}
-.rk button{flex:1}.rk .sec{opacity:.8}
-.ri{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:8px 10px;margin-bottom:8px;cursor:pointer}
-.ri.me{border-color:var(--ac)}.ri .n{width:26px;text-align:center;font-weight:700;color:var(--sub)}
-.sb{width:34px;height:34px;border-radius:50%;border:2px solid var(--ac);display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--ac);flex:0 0 auto}
-.ri .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ri .v{font-size:13px;color:var(--sub);text-align:right}
-</style></head><body>
-<div id="top">
- <div>自分の領地<b><span id="area">0</span> <small>km²</small></b></div>
- <div>コイン<b id="coin">0</b></div>
- <div>陸軍 / 海軍<b><span id="tl">0</span> / <span id="ts">0</span></b></div>
-</div>
+input{width:100%;padding:11px;font-size:1rem;border:1px solid var(--bd);border-radius:10px;margin-bottom:8px;background:var(--bg);color:var(--tx)}
+button{width:100%;padding:12px;font-size:1rem;border:0;border-radius:10px;background:var(--ac);color:#fff;font-weight:700;margin-top:6px}
+button.sec{background:#495057}
+button:disabled{opacity:.4}
+canvas{width:100%;aspect-ratio:1;background:#fff;border:2px solid var(--bd);border-radius:10px;touch-action:none;display:block}
+img.pic{width:100%;border:2px solid var(--bd);border-radius:10px;background:#fff;display:block}
+.tb{display:flex;gap:6px;align-items:center;margin:8px 0;flex-wrap:wrap}
+.cl{width:30px;height:30px;border-radius:50%;border:3px solid transparent;padding:0;margin:0}
+.cl.on{border-color:var(--ac)}
+.tb input[type=range]{flex:1;margin:0;padding:0;min-width:80px}
+.tb .clr{width:auto;padding:6px 10px;margin:0;font-size:.85rem}
+.code{font-size:2.4rem;letter-spacing:.3em;text-align:center;font-weight:800}
+.mu{color:var(--mu);font-size:.9rem;text-align:center}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.opt{border:3px solid transparent;border-radius:12px;padding:4px;background:var(--bg)}
+.opt.me{opacity:.45}
+.opt.vt{border-color:var(--ac)}
+.opt small{display:block;text-align:center;padding:4px 0}
+.win{border-color:#f4b400}
+ul{padding-left:1.2em;margin:6px 0}
+#err{color:#e03131;text-align:center;min-height:1.2em;margin:6px 0 0}
+</style>
+</head>
+<body>
+<div id="app"></div>
 
-<div class="pg on" id="pgmap"><div id="map"></div><div id="msg"></div><button id="bulk">まとめて攻める×10</button></div>
-
-<div class="pg" id="pgearn">
- <div class="card c">
-  <div class="sub">スマホを<b>画面を下にして</b>置いている間だけ計測します</div>
-  <div class="big" id="clk">00:00</div>
-  <div id="st">待機中</div>
-  <button id="go" style="width:100%">計測を開始</button>
-  <p class="sub" id="rate"></p>
- </div>
- <div class="card sub">・計測中は画面が消えないようにしています。<br>・伏せると計測開始、持ち上げると一時停止します。<br>・1分ごとにコインがもらえます。<br>・iPhoneは開始時にモーションの許可が必要です。</div>
- <div class="card c">総勉強時間 <b id="total">0</b> 分　<span class="sub">（今日の計測 <span id="sess">0</span> 分）</span></div>
-</div>
-
-<div class="pg" id="pgnation">
- <div class="card c"><div class="badge" id="flag">国</div><h2 id="nname" style="margin:4px 0">名もなき国</h2>
-  <div class="sub">領土 <span id="nland">0</span> マス ／ <span id="narea">0</span> km²</div></div>
- <div class="card"><b>国の名前</b><div class="row" style="margin-top:8px"><input type="text" id="nm" maxlength="12" placeholder="国名を入力"><button id="nmok" style="flex:0 0 auto">決定</button></div></div>
- <div class="card"><b>国のアイコン（一文字）</b><div id="icons"></div><div class="row" style="margin-top:8px"><input type="text" id="ic" maxlength="2" placeholder="好きな一文字"><button id="icok" style="flex:0 0 auto">決定</button></div></div>
- <div class="card"><b>兵力を上げる</b><p class="sub">防衛力 <span id="nd">1</span> 以上の兵が必要です。陸の領地は陸軍、海の領地は海軍で攻めます。</p>
-  <p>陸軍 <b id="nl">0</b>　海軍 <b id="ns">0</b></p>
-  <div class="row"><button id="bl1" class="sec">陸軍×1　20コイン</button><button id="bl5" class="sec">陸軍×5　100コイン</button></div>
-  <div class="row" style="margin-top:8px"><button id="bs1" class="sec">海軍×1　30コイン</button><button id="bs5" class="sec">海軍×5　150コイン</button></div></div>
-<div class="card"><b>国を消去</b><p class="sub">領土・コイン・兵力・勉強時間・国名など、すべてのデータを削除して最初からやり直します。元に戻せません。</p><button id="wipe" class="sec" style="width:100%;color:#d33;border-color:#d33">国を消去する</button></div>
-</div>
-
-<div class="pg" id="pgrank"><div class="row rk" style="margin-bottom:10px"><button id="rk1">領地ランキング</button><button id="rk2" class="sec">勉強時間</button></div>
- <div id="rinfo" class="sub c" style="margin-bottom:8px"></div><div id="rlist"></div><p class="sub c">タップすると、その国の領地を地図で見られます</p></div>
-
-<nav>
- <button data-t="map" class="on"><svg viewBox="0 0 24 24"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2zM9 4v14M15 6v14"/></svg>領地</button>
- <button data-t="earn"><svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 13V8M9 2h6"/></svg>稼ぐ</button>
- <button data-t="nation"><svg viewBox="0 0 24 24"><path d="M5 21V4M5 4h13l-3 4 3 4H5"/></svg>国</button>
- <button data-t="rank"><svg viewBox="0 0 24 24"><path d="M7 4h10v5a5 5 0 0 1-10 0zM7 6H4a3 3 0 0 0 3 4M17 6h3a3 3 0 0 1-3 4M12 14v4M8 21h8"/></svg>ランキング</button>
-</nav>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-app-compat.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-database-compat.min.js"></script>
 <script>
-const KEY='terrMap1',R=10000,SQ=Math.sqrt(3),PR=L.Projection.SphericalMercator,$=id=>document.getElementById(id);
-let S={coin:0,troop:0,land:0,sea:0,seaK:[],mins:0,secs:0,own:[],cap:null,name:'名もなき国',icon:'国',view:null};
-try{const d=JSON.parse(localStorage.getItem(KEY));if(d&&d.own)S=Object.assign(S,d)}catch(e){}
-S.secs=S.secs||(S.mins*60);if(S.troop){S.land+=S.troop;S.troop=0}
-const SEAK=new Set(S.seaK||[]);
-const own=new Set(S.own),ENEMY=new Map();
-let uid=null,db=null,ready=false,syncT=null,lastWon='';
-const save=()=>{S.own=[...own];S.seaK=[...SEAK];try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}cloud()};
-const map=L.map('map').setView(S.view?S.view.c:[35.68,139.76],S.view?S.view.z:9);
-L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,attribution:'&copy; OpenStreetMap contributors'}).addTo(map);
-const rend=L.canvas({padding:.5}),gOwn=L.layerGroup().addTo(map),gFr=L.layerGroup().addTo(map);let capMk=null;
-const hc=(q,r)=>[R*SQ*(q+r/2),R*1.5*r];
-function corners(q,r,s=1){const[x,y]=hc(q,r),o=[];for(let i=0;i<6;i++){const a=Math.PI/180*(60*i-30);o.push(PR.unproject(L.point(x+s*R*Math.cos(a),y+s*R*Math.sin(a))))}return o}
-function ll2hex(ll){const p=PR.project(ll),r0=p.y/(R*1.5),q0=p.x/(R*SQ)-r0/2,s0=-q0-r0;let q=Math.round(q0),r=Math.round(r0),s=Math.round(s0);const dq=Math.abs(q-q0),dr=Math.abs(r-r0),ds=Math.abs(s-s0);if(dq>dr&&dq>ds)q=-r-s;else if(dr>ds)r=-q-s;return[q,r]}
-const NB=[[1,0],[-1,0],[0,1],[0,-1],[1,-1],[-1,1]];
-const defn=()=>1+Math.floor(own.size/25),cost=()=>5*defn(),mult=()=>1+Math.min(own.size,300)*.002;
-const tcache=new Map(),typ=new Map();
-function tile(z,x,y){const k=z+'/'+x+'/'+y;if(!tcache.has(k))tcache.set(k,new Promise(res=>{const im=new Image();im.crossOrigin='anonymous';im.onload=()=>{const c=document.createElement('canvas');c.width=c.height=256;const g=c.getContext('2d',{willReadFrequently:true});g.drawImage(im,0,0);res(g)};im.onerror=()=>res(null);im.src='https://tile.openstreetmap.org/'+k+'.png'}));return tcache.get(k)}
-async function water(ll){const z=9,n=1<<z,lat=Math.max(-85,Math.min(85,ll.lat))*Math.PI/180;let fx=(ll.lng+180)/360*n;fx=((fx%n)+n)%n;const fy=(1-Math.log(Math.tan(lat)+1/Math.cos(lat))/Math.PI)/2*n;
- const g=await tile(z,Math.floor(fx),Math.floor(fy));if(!g)return null;try{const d=g.getImageData(Math.floor((fx%1)*256),Math.floor((fy%1)*256),1,1).data;return Math.abs(d[0]-170)<14&&Math.abs(d[1]-211)<14&&Math.abs(d[2]-223)<14}catch(e){return null}}
-async function classify(q,r){const k=q+','+r;if(ENEMY.has(k))return ENEMY.get(k).s?'sea':'land';if(SEAK.has(k))return 'sea';if(typ.has(k))return typ.get(k);const[x,y]=hc(q,r);let w=0,tot=0;
- for(const[dx,dy]of[[0,0],[.4,0],[-.4,0],[0,.4],[0,-.4]]){const v=await water(PR.unproject(L.point(x+dx*R,y+dy*R)));if(v===null)continue;tot++;if(v)w++}
- const t=tot&&w/tot>=.6?'sea':'land';typ.set(k,t);return t}
-function addHex(q,r){const sea=SEAK.has(q+','+r),h=sea?205:140+((q*7+r*13)%40);L.polygon(corners(q,r,.97),{renderer:rend,interactive:false,stroke:false,fillColor:`hsl(${h},75%,${42+((q+r)%3)*5}%)`,fillOpacity:.78}).addTo(gOwn)}
+const firebaseConfig = {
+  apiKey: "AIzaSyBqDRgzhHOvUcUoV_JHm9zFJ1IS_CA0394",
+  authDomain: "jumyou.firebaseapp.com",
+  databaseURL: "https://jumyou-default-rtdb.firebaseio.com",
+  projectId: "jumyou",
+  storageBucket: "jumyou.firebasestorage.app",
+  messagingSenderId: "441346887929",
+  appId: "1:441346887929:web:0ca3115f8d1f806df49228",
+  measurementId: "G-FBZF2NHEC9"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
 
-function frontier(){const f=new Set();own.forEach(k=>{const[q,r]=k.split(',').map(Number);NB.forEach(([a,b])=>{const n=(q+a)+','+(r+b);if(!own.has(n))f.add(n)})});return f}
-let gen=0;
-function drawFr(){labels();const my=++gen;gFr.clearLayers();if(map.getZoom()<8||!own.size)return;[...frontier()].forEach(async k=>{const[q,r]=k.split(',').map(Number),t=await classify(q,r);if(my!==gen)return;
- L.polygon(corners(q,r,.95),{renderer:rend,interactive:false,color:ENEMY.has(k)?'#dc2626':t=='sea'?'#0891b2':'#2563eb',weight:1,dashArray:t=='sea'?'1 4':'3 3',fill:false}).addTo(gFr)})}
+const $ = s => document.querySelector(s);
+const app = $('#app');
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const uid = (() => {
+  try { let v = localStorage.getItem('uid'); if (!v) { v = Math.random().toString(36).slice(2, 10); localStorage.setItem('uid', v); } return v; }
+  catch (e) { return Math.random().toString(36).slice(2, 10); }
+})();
+let name = '', code = '', room = null, rref = null, lastKey = '';
+let color = '#000000', size = 6;
+const COPY_SEC = 60;
 
-function area(){let a=0;own.forEach(k=>{const[q,r]=k.split(',').map(Number),lat=PR.unproject(L.point(0,hc(q,r)[1])).lat*Math.PI/180;a+=2.598*R*R*Math.cos(lat)**2/1e6});return a}
-const gLbl=L.layerGroup().addTo(map);
-function labels(){gLbl.clearLayers();const z=map.getZoom();if(z<7||!own.size)return;
- const px=Math.round(R*SQ/(156543.03/Math.pow(2,z))),fs=Math.max(8,Math.min(56,px*.55));
- own.forEach(k=>{const[q,r]=k.split(',').map(Number),[x,y]=hc(q,r);
-  L.marker(PR.unproject(L.point(x,y)),{interactive:false,keyboard:false,icon:L.divIcon({className:'',html:`<div class="lb" style="font-size:${fs}px;width:${px}px;height:${px}px">${S.icon}</div>`,iconSize:[px,px],iconAnchor:[px/2,px/2]})}).addTo(gLbl)})}
-const capMark=labels;
-const fmt=n=>n.toLocaleString('ja',{maximumFractionDigits:1});
-function ui(){const a=fmt(area());$('area').textContent=a;$('coin').textContent=S.coin;$('tl').textContent=S.land;$('ts').textContent=S.sea;
- $('rate').textContent=`1分=${(10*mult()).toFixed(1)}コイン（領土ボーナス込み）`;$('bulk').disabled=!own.size;
- $('flag').textContent=S.icon;$('nname').textContent=S.name;$('nland').textContent=own.size;$('narea').textContent=a;$('nl').textContent=S.land;$('ns').textContent=S.sea;$('nd').textContent=defn();
- $('total').textContent=Math.floor(S.secs/60);$('sess').textContent=Math.floor(sess/60);
- $('bl1').disabled=S.coin<20;$('bl5').disabled=S.coin<100;$('bs1').disabled=S.coin<30;$('bs5').disabled=S.coin<150;
- document.querySelectorAll('#icons button').forEach(b=>b.classList.toggle('on',b.textContent==S.icon))}
-const msg=t=>$('msg').textContent=t;
-const rk=(q,r)=>['r'+String(r+1000000).padStart(7,'0'),'c'+String(q+1000000).padStart(7,'0')];
-const cloudOK=()=>!!(db&&uid&&ready);
-async function claim(q,r,sea,expect){const[row,col]=rk(q,r);
- const res=await db.ref(`owners/${row}/${col}`).transaction(cur=>expect==null?(cur==null?{u:uid,s:sea}:undefined):(cur&&cur.u===expect?{u:uid,s:sea}:undefined));
- if(!res.committed)return false;const up={};up[`mine/${uid}/${row}/${col}`]=sea;if(expect)up[`mine/${expect}/${row}/${col}`]=null;await db.ref().update(up);return true}
-async function conquer(q,r){const k=q+','+r;let cur=null;
- if(cloudOK()){try{cur=(await db.ref('owners/'+rk(q,r).join('/')).get()).val()}catch(e){}}
- if(cur&&cur.u===uid)return false;
- const sea=cur?cur.s===1:(await classify(q,r))=='sea',key=sea?'sea':'land',nm=sea?'海軍':'陸軍',c=cost();let et=0,en='';
- if(cur){const v=(await db.ref('ranking/'+cur.u).get()).val()||{};et=v[sea?'ts':'tl']||0;en=v.name||'敵国';
-  if(S[key]<=et){msg(`${en}の${nm}(${et})に勝てません。自軍の${nm}は${S[key]}です`);return false}}
- else if(S[key]<defn()){msg(`${nm}が足りません（必要${defn()}）。国タブで雇えます`);return false}
- if(S.coin<c){msg(`コインが足りません（必要${c}）`);return false}
- if(cloudOK()){await syncNow();if(!await claim(q,r,sea?1:0,cur?cur.u:null)){msg('状況が変わりました。もう一度試してください');return false}}
- S.coin-=c;own.add(k);if(sea)SEAK.add(k);addHex(q,r);ENEMY.delete(k);drawEnemy();
- if(cur){S[key]-=Math.ceil(et/2);lastWon=`戦争に勝利！${en}の領土を奪いました`}
- return true}
-let busy=false;
-map.on('click',async e=>{if(busy)return;busy=true;try{const[q,r]=ll2hex(e.latlng),k=q+','+r;
- if(!own.size){msg('地形を調べています…');if(await classify(q,r)=='sea')return msg('陸地をタップしてください');
-  if(cloudOK()){const cur=(await db.ref('owners/'+rk(q,r).join('/')).get()).val();if(cur)return msg('ここは他の国の領土です。別の場所を選んでください')}
-  const ks=[[q,r],...NB.map(([a,b])=>[q+a,r+b])];let first=true;
-  for(const[a,b]of ks){const sea=(await classify(a,b))=='sea',kk=a+','+b;
-   if(cloudOK()){let ok=false;try{ok=await claim(a,b,sea?1:0,null)}catch(x){}if(!ok){if(first)return msg('建国に失敗しました');continue}}
-   if(sea)SEAK.add(kk);own.add(kk);first=false}
-  redrawOwn();S.cap=k;map.setView(e.latlng,Math.max(map.getZoom(),9));msg('建国！「稼ぐ」タブで勉強してコインを貯めよう');save();ui();drawFr();return}
- if(own.has(k))return msg('自分の領土です');
- if(!frontier().has(k)){const en=ENEMY.get(k);if(en){const v=(await db.ref('ranking/'+en.u).get()).val()||{};return msg(`${v.name||'他の国'}の領土です（隣接すると攻められます）`)}return msg('隣接したマスだけ攻められます')}
- lastWon='';if(await conquer(q,r)){msg(lastWon||'領土を獲得！');save();ui();drawFr()}}finally{busy=false}});
-map.on('zoomend',()=>{drawFr();S.view={c:[map.getCenter().lat,map.getCenter().lng],z:map.getZoom()};save()});
-$('bulk').onclick=async()=>{if(busy)return;busy=true;$('bulk').disabled=true;msg('攻めています…');let n=0,tries=0,why='';
- while(n<10&&tries<40){tries++;const f=[...frontier()].filter(x=>!ENEMY.has(x));if(!f.length)break;const k=f[Math.floor(Math.random()*f.length)].split(',').map(Number),t=await classify(...k);
-  if(S.coin<cost()){why='コインが足りません';break}
-  if(S[t=='sea'?'sea':'land']<defn()){why=(t=='sea'?'海軍':'陸軍')+'が足りません';continue}
-  if(await conquer(...k))n++}
- msg(n?`${n}マス獲得！`:(why||'攻められません'));save();ui();drawFr();$('bulk').disabled=false;busy=false};
-function redrawOwn(){gOwn.clearLayers();own.forEach(k=>{const[q,r]=k.split(',').map(Number);addHex(q,r)});labels()}
-// 他国の領土表示
-const gOth=L.layerGroup().addTo(map);let sub=null,subKey='',wT=null;
-const hue=u=>{let h=0;for(const c of u)h=(h*31+c.charCodeAt(0))%360;return h};
-function drawEnemy(){gOth.clearLayers();ENEMY.forEach((v,k)=>{const[q,r]=k.split(',').map(Number);L.polygon(corners(q,r,.97),{renderer:rend,interactive:false,stroke:false,fillColor:`hsl(${(hue(v.u)+300)%360},70%,50%)`,fillOpacity:.5}).addTo(gOth)})}
-function watch(){if(!cloudOK())return;if(map.getZoom()<7){if(sub){sub.ref.off('value',sub.cb);sub=null;subKey='';ENEMY.clear();drawEnemy()}return}
- const b=map.getBounds(),r1=Math.min(ll2hex(b.getSouthWest())[1],ll2hex(b.getNorthEast())[1])-2,r2=Math.max(ll2hex(b.getSouthWest())[1],ll2hex(b.getNorthEast())[1])+2,key=r1+':'+r2;
- if(key==subKey||r2-r1>400)return;if(sub)sub.ref.off('value',sub.cb);subKey=key;
- const ref=db.ref('owners').orderByKey().startAt(rk(0,r1)[0]).endAt(rk(0,r2)[0]);
- const cb=sn=>{ENEMY.clear();const v=sn.val()||{};for(const row in v)for(const col in v[row]){const o=v[row][col];if(o.u===uid)continue;ENEMY.set((+col.slice(1)-1000000)+','+(+row.slice(1)-1000000),o)}drawEnemy();drawFr()};
- ref.on('value',cb);sub={ref:{off:(a,f)=>ref.off(a,f)},cb}}
-map.on('moveend',()=>{clearTimeout(wT);wT=setTimeout(watch,500)});
-function applyMine(val){const n=new Set(),sea=new Set();for(const row in val)for(const col in val[row]){const k=(+col.slice(1)-1000000)+','+(+row.slice(1)-1000000);n.add(k);if(val[row][col]===1)sea.add(k)}
- const lost=[...own].filter(k=>!n.has(k)).length;own.clear();n.forEach(k=>own.add(k));SEAK.clear();sea.forEach(k=>SEAK.add(k));
- redrawOwn();if(lost)msg(`${lost}マスを他の国に奪われました！`);save();ui();drawFr()}
-// クラウド同期・ランキング
-const CFG={apiKey:"AIzaSyAqe24qeS_gYtMA_gnF_lYNP70keCQcpnA",authDomain:"renritu-56ae7.firebaseapp.com",databaseURL:"https://renritu-56ae7-default-rtdb.firebaseio.com",projectId:"renritu-56ae7",storageBucket:"renritu-56ae7.firebasestorage.app",messagingSenderId:"327969979771",appId:"1:327969979771:web:709a0fc2a281dc495e91de",measurementId:"G-VFLGB9QXR3"};
-function cloud(){if(!cloudOK()||!own.size)return;clearTimeout(syncT);syncT=setTimeout(syncNow,3000)}
-async function syncNow(){if(!cloudOK()||!own.size)return;clearTimeout(syncT);const k=own.has(S.cap)?S.cap:[...own][0],[q,r]=k.split(',').map(Number),[x,y]=hc(q,r),ll=PR.unproject(L.point(x,y));
- try{await db.ref('ranking/'+uid).set({name:S.name,icon:S.icon,area:Math.round(area()*10)/10,mins:Math.floor(S.secs/60),land:own.size,tl:S.land,ts:S.sea,lat:Math.round(ll.lat*1e4)/1e4,lng:Math.round(ll.lng*1e4)/1e4,updated:firebase.database.ServerValue.TIMESTAMP})}catch(e){}}
-async function migrate(){if(S.mig)return;const sn=await db.ref('mine/'+uid).get();if(!sn.exists()){await Promise.all([...own].map(async k=>{const[q,r]=k.split(',').map(Number);try{await claim(q,r,SEAK.has(k)?1:0,null)}catch(e){}}))}S.mig=1}
-let rkMode='area',authErr='';
-async function loadRank(){const box=$('rlist');box.textContent='';
- if(!cloudOK()){$('rinfo').textContent='オンラインに接続できません'+(authErr?'（'+authErr+'）':'')+'。Firebaseの匿名ログインを有効にしてください';return}
- await syncNow();$('rinfo').textContent='読み込み中…';
- try{const sn=await db.ref('ranking').orderByChild(rkMode).limitToLast(50).get(),a=[];sn.forEach(c=>{a.push([c.key,c.val()])});a.reverse();$('rinfo').textContent=a.length?'':'まだ誰もいません';
-  a.forEach(([id,v],i)=>{const d=document.createElement('div');d.className='ri'+(id==uid?' me':'');
-   const mk=(c,t)=>{const e=document.createElement('div');e.className=c;e.textContent=t;d.appendChild(e);return e};
-   mk('n',i+1);mk('sb',v.icon);mk('nm',v.name);
-   mk('v',rkMode=='area'?fmt(v.area)+' km²':Math.floor(v.mins/60)+'時間'+(v.mins%60)+'分');
-   d.onclick=()=>{document.querySelector('nav button[data-t=map]').click();map.setView([v.lat,v.lng],9)};box.appendChild(d)})}
- catch(e){$('rinfo').textContent='ランキングを読み込めませんでした'}}
-$('rk1').onclick=()=>{rkMode='area';$('rk1').classList.remove('sec');$('rk2').classList.add('sec');loadRank()};
-$('rk2').onclick=()=>{rkMode='mins';$('rk2').classList.remove('sec');$('rk1').classList.add('sec');loadRank()};
-// タブ
-document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('on',x==b));
- document.querySelectorAll('.pg').forEach(p=>p.classList.toggle('on',p.id=='pg'+b.dataset.t));if(b.dataset.t=='map')setTimeout(()=>map.invalidateSize(),50);if(b.dataset.t=='rank')loadRank();ui()});
-// 国
-['国','王','龍','虎','鷹','狼','桜','星','炎','冠','城','剣'].forEach(i=>{const b=document.createElement('button');b.textContent=i;b.onclick=()=>{S.icon=i;save();capMark();ui()};$('icons').appendChild(b)});
-$('nm').value=S.name;
-$('icok').onclick=()=>{const c=[...$('ic').value.trim()][0];if(c){S.icon=c;$('ic').value='';save();capMark();ui()}};
-$('nmok').onclick=()=>{const v=$('nm').value.trim();if(v){S.name=v;save();ui()}};
-const buy=(key,n,c)=>{if(S.coin>=c){S.coin-=c;S[key]+=n;save();ui()}};
-$('bl1').onclick=()=>buy('land',1,20);$('bl5').onclick=()=>buy('land',5,100);$('bs1').onclick=()=>buy('sea',1,30);$('bs5').onclick=()=>buy('sea',5,150);
-// 稼ぐ：画面を下にして置いている間だけ計測
-let run=false,fd=false,lastEv=0,lastMot=0,last=Date.now(),sess=0,wl=null,hasEv=false,t0=0;
-const IOS=/iPhone|iPad|iPod/.test(navigator.userAgent);
-function onOri(e){if(e.beta==null||Date.now()-lastMot<2000)return;hasEv=true;lastEv=Date.now();fd=Math.abs(e.beta)>150&&Math.abs(e.gamma)<40}
-function onMot(e){const a=e.accelerationIncludingGravity;if(!a||a.z==null)return;hasEv=true;lastEv=lastMot=Date.now();const z=IOS?-a.z:a.z;fd=z<-7&&Math.abs(a.x)<4&&Math.abs(a.y)<4}
-function status(){if(!run)return $('st').textContent='待機中';
- $('st').textContent=(!hasEv&&Date.now()-t0>3000)?'センサーが使えません（HTTPSで開いてください）':fd?'計測中':'一時停止中：画面を下にして置いてね'}
-function tick(){const now=Date.now(),d=Math.min((now-last)/1000,3600);last=now;
- if(run){const live=fd&&(document.hidden||now-lastEv<4000);
-  if(live){S.secs+=d;sess+=d;let got=0;while(Math.floor(S.secs/60)>S.mins){S.mins++;const c=Math.round(10*mult());S.coin+=c;got+=c}
-   if(got){msg(`${got}コイン獲得！`);save()}}
-  ui()}
- $('clk').textContent=String(Math.floor(sess/60)).padStart(2,'0')+':'+String(Math.floor(sess%60)).padStart(2,'0');status()}
-async function lock(){try{if(navigator.wakeLock&&run)wl=await navigator.wakeLock.request('screen')}catch(e){}}
-$('go').onclick=async()=>{
- if(!run){
-  for(const E of[window.DeviceMotionEvent,window.DeviceOrientationEvent]){try{if(E&&E.requestPermission)await E.requestPermission()}catch(e){}}
-  addEventListener('devicemotion',onMot);addEventListener('deviceorientation',onOri);run=true;sess=0;fd=false;hasEv=false;t0=Date.now();last=Date.now();lock();$('go').textContent='計測を終了'}
- else{run=false;removeEventListener('devicemotion',onMot);removeEventListener('deviceorientation',onOri);try{wl&&wl.release()}catch(e){}wl=null;save();$('go').textContent='計測を開始';msg(`お疲れさま！${Math.floor(sess/60)}分勉強しました`)}
- tick()};
-setInterval(tick,1000);
-document.addEventListener('visibilitychange',()=>{if(!document.hidden)lock()});
+/* ---------- ホーム ---------- */
+function home() {
+  lastKey = '';
+  app.innerHTML = `<h1>🎨 そっくり描きゲーム</h1><div class="card">
+    <input id="nm" maxlength="10" placeholder="あなたの名前" value="${esc(name)}">
+    <button id="mk">ルームを作る</button><hr style="border:0;border-top:1px solid var(--bd);margin:14px 0">
+    <input id="cd" inputmode="numeric" maxlength="4" placeholder="ルーム番号（4桁）">
+    <button id="jn" class="sec">参加する</button><p id="err"></p></div>`;
+  const err = m => $('#err').textContent = m;
+  $('#mk').onclick = async () => {
+    name = $('#nm').value.trim(); if (!name) return err('名前を入力してね');
+    const c = String(Math.floor(1000 + Math.random() * 9000));
+    try { await db.ref('rooms/' + c).set({ host: uid, state: 'lobby', round: 1, created: Date.now() }); enter(c); }
+    catch (e) { err('作成失敗：DBのルールを確認してね'); }
+  };
+  $('#jn').onclick = async () => {
+    name = $('#nm').value.trim(); const c = $('#cd').value.trim();
+    if (!name) return err('名前を入力してね');
+    try {
+      const s = await db.ref('rooms/' + c).get();
+      if (!s.exists()) return err('そのルームは見つかりません');
+      enter(c);
+    } catch (e) { err('参加失敗：DBのルールを確認してね'); }
+  };
+}
 
-$('reset')&&0;
-$('wipe').onclick=async()=>{if(!confirm('国を消去しますか？すべてのデータが削除され、元に戻せません。'))return;if(!confirm('本当に消去しますか？'))return;
- run=false;if(cloudOK()){try{const up={};up['ranking/'+uid]=null;up['mine/'+uid]=null;own.forEach(k=>{const[q,r]=k.split(',').map(Number);up['owners/'+rk(q,r).join('/')]=null});await db.ref().update(up)}catch(e){}}
- try{localStorage.removeItem(KEY)}catch(e){}location.reload()};
-own.forEach(k=>{const[q,r]=k.split(',').map(Number);addHex(q,r)});
-capMark();ui();drawFr();clk();
-try{firebase.initializeApp(CFG);db=firebase.database();firebase.auth().signInAnonymously().then(async c=>{uid=c.user.uid;await migrate();ready=true;db.ref('mine/'+uid).on('value',sn=>applyMine(sn.val()||{}));watch();cloud()}).catch(e=>{authErr=e.code||'error'})}catch(e){authErr='sdk'}
-if(!own.size)msg('地図を拡大して、出発地点をタップしよう');
-</script></body></html>
+function enter(c) {
+  code = c; rref = db.ref('rooms/' + c);
+  const p = rref.child('players/' + uid);
+  p.set({ name }); p.onDisconnect().remove();
+  rref.on('value', s => { room = s.val(); view(); });
+}
+
+/* ---------- お絵かき ---------- */
+function toolbar() {
+  const cs = ['#000000', '#e03131', '#1971c2', '#2f9e44', '#f08c00', '#ffffff'];
+  return `<div class="tb">${cs.map(c => `<button class="cl ${c === color ? 'on' : ''}" data-c="${c}" style="background:${c}"></button>`).join('')}
+  <input type="range" id="sz" min="2" max="30" value="${size}"><button class="clr sec" id="clr">全消し</button></div>`;
+}
+function pad() {
+  const cv = $('#cv'), x = cv.getContext('2d');
+  cv.width = cv.height = 400;
+  const wipe = () => { x.fillStyle = '#fff'; x.fillRect(0, 0, 400, 400); x.lineCap = x.lineJoin = 'round'; };
+  wipe();
+  let down = false, l;
+  const P = e => { const r = cv.getBoundingClientRect(); return [(e.clientX - r.left) * 400 / r.width, (e.clientY - r.top) * 400 / r.height]; };
+  const seg = (a, b) => { x.strokeStyle = color; x.lineWidth = size; x.beginPath(); x.moveTo(...a); x.lineTo(...b); x.stroke(); };
+  cv.onpointerdown = e => { down = true; l = P(e); cv.setPointerCapture(e.pointerId); seg(l, l); };
+  cv.onpointermove = e => { if (!down) return; const p = P(e); seg(l, p); l = p; };
+  cv.onpointerup = cv.onpointercancel = () => down = false;
+  document.querySelectorAll('.cl').forEach(b => b.onclick = () => {
+    color = b.dataset.c; document.querySelectorAll('.cl').forEach(o => o.classList.toggle('on', o === b));
+  });
+  $('#sz').oninput = e => size = +e.target.value;
+  $('#clr').onclick = wipe;
+  return () => cv.toDataURL('image/jpeg', 0.6);
+}
+
+/* ---------- 画面 ---------- */
+function view() {
+  if (!room) { home(); return; }
+  const ps = room.players || {}, ids = Object.keys(ps), st = room.state;
+  const host = room.host === uid, dr = room.drawer === uid;
+  const cp = room.copies || {}, vt = room.votes || {};
+  const sub = st === 'copy' ? !!cp[uid] : st === 'vote' ? !!vt[uid] : false;
+  const key = [st, room.round, room.drawer, ids.join(), sub].join('|');
+  if (key !== lastKey) {
+    lastKey = key;
+    const list = `<ul>${ids.map(i => `<li>${esc(ps[i].name)}${i === room.host ? ' 👑' : ''}${i === room.drawer ? ' ✏️' : ''}</li>`).join('')}</ul>`;
+    const head = `<h1>ルーム ${code}　第${room.round}回</h1>`;
+    if (st === 'lobby') {
+      app.innerHTML = `${head}<div class="card"><div class="code">${code}</div><p class="mu">この番号を友達に教えてね</p>${list}
+        ${host ? `<button id="go" ${ids.length < 3 ? 'disabled' : ''}>ゲーム開始（3人以上）</button>` : '<p class="mu">ホストの開始を待っています…</p>'}</div>`;
+      if (host) $('#go').onclick = () => {
+        const d = ids.filter(i => i !== room.prevDrawer); const pick = d[Math.floor(Math.random() * d.length)] || ids[0];
+        rref.update({ state: 'draw', drawer: pick, original: null, copies: null, votes: null });
+      };
+    } else if (st === 'draw') {
+      if (dr) {
+        app.innerHTML = `${head}<div class="card"><p><b>あなたが出題者！</b> お題は自由。みんなが真似できる絵を描いてね</p>${toolbar()}<canvas id="cv"></canvas><button id="ok">完成！</button></div>`;
+        const get = pad();
+        $('#ok').onclick = () => rref.update({ original: get(), state: 'copy', copyEnd: Date.now() + COPY_SEC * 1000 });
+      } else {
+        app.innerHTML = `${head}<div class="card"><p class="mu">✏️ ${esc((ps[room.drawer] || {}).name || '出題者')} さんが絵を描いています…</p></div>`;
+      }
+    } else if (st === 'copy') {
+      if (dr) app.innerHTML = `${head}<div class="card"><p class="mu">みんなが真似して描いています</p><p class="mu" id="st"></p><img class="pic" src="${room.original}"></div>`;
+      else if (sub) app.innerHTML = `${head}<div class="card"><p class="mu">提出しました！他の人を待っています</p><p class="mu" id="st"></p></div>`;
+      else {
+        app.innerHTML = `${head}<div class="card"><p class="mu" id="st"></p><p><b>お手本</b></p><img class="pic" src="${room.original}"><p><b>あなたの絵</b></p>${toolbar()}<canvas id="cv"></canvas><button id="ok">提出する</button></div>`;
+        const get = pad();
+        $('#ok').onclick = () => rref.child('copies/' + uid).set({ img: get(), name });
+      }
+    } else if (st === 'vote') {
+      const cands = Object.keys(cp);
+      app.innerHTML = `${head}<div class="card"><p><b>お手本</b></p><img class="pic" src="${room.original}"></div>
+        <div class="card"><p>一番似ていると思う絵を選んでね（自分以外）</p><p class="mu" id="st"></p><div class="grid">
+        ${cands.map(c => `<div class="opt ${c === uid ? 'me' : ''} ${vt[uid] === c ? 'vt' : ''}" data-id="${c}"><img class="pic" src="${cp[c].img}"><small>${esc(cp[c].name)}</small></div>`).join('')}</div>
+        ${host ? '<button id="fin" class="sec">投票を締め切る</button>' : ''}</div>`;
+      document.querySelectorAll('.opt').forEach(o => o.onclick = () => { if (o.dataset.id !== uid) rref.child('votes/' + uid).set(o.dataset.id); });
+      if (host) $('#fin').onclick = () => rref.update({ state: 'result' });
+    } else if (st === 'result') {
+      const cands = Object.keys(cp), tally = {};
+      cands.forEach(c => tally[c] = 0); Object.values(vt).forEach(v => { if (v in tally) tally[v]++; });
+      const sorted = cands.sort((a, b) => tally[b] - tally[a]), top = sorted.length ? tally[sorted[0]] : 0;
+      app.innerHTML = `${head}<div class="card"><p><b>お手本</b>（${esc((ps[room.drawer] || {}).name || '')}）</p><img class="pic" src="${room.original}"></div>
+        <div class="card"><h3 style="margin-top:0">🏆 結果</h3><div class="grid">
+        ${sorted.map(c => `<div class="opt ${tally[c] === top && top > 0 ? 'win' : ''}"><img class="pic" src="${cp[c].img}"><small>${tally[c] === top && top > 0 ? '👑 ' : ''}${esc(cp[c].name)}：${tally[c]}票</small></div>`).join('') || '<p class="mu">提出がありませんでした</p>'}</div>
+        ${host ? '<button id="again">もう一回</button>' : '<p class="mu">ホストが次を始めるのを待っています</p>'}</div>`;
+      if (host) $('#again').onclick = () => rref.update({ state: 'lobby', round: room.round + 1, prevDrawer: room.drawer, drawer: null, original: null, copies: null, votes: null });
+    }
+  }
+  tick();
+}
+
+function tick() {
+  if (!room) return;
+  const ps = room.players || {}, ids = Object.keys(ps), host = room.host === uid, st = room.state;
+  const cp = room.copies || {}, vt = room.votes || {}, s = $('#st');
+  if (st === 'copy') {
+    const copiers = ids.filter(i => i !== room.drawer), left = Math.max(0, Math.ceil(((room.copyEnd || 0) - Date.now()) / 1000));
+    if (s) s.textContent = `残り ${left} 秒　提出 ${copiers.filter(i => cp[i]).length}/${copiers.length}`;
+    if (host && (left <= 0 || copiers.every(i => cp[i]))) rref.update({ state: Object.keys(cp).length ? 'vote' : 'result' });
+  } else if (st === 'vote') {
+    const cands = Object.keys(cp), eligible = ids.filter(i => cands.some(c => c !== i));
+    if (s) s.textContent = `投票 ${eligible.filter(i => vt[i]).length}/${eligible.length}`;
+    if (host && eligible.every(i => vt[i])) rref.update({ state: 'result' });
+  }
+}
+setInterval(tick, 1000);
+home();
+</script>
+</body>
+</html>
